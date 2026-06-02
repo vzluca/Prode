@@ -468,6 +468,20 @@ h1 .g{color:var(--lime)}
       <div id="aMatches"></div>
       <button class="bsr" onclick="saveRR()">Guardar resultados</button>
       <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.05)">
+        <div class="admin-h">Resultados fase eliminatoria</div>
+        <p style="font-size:0.62rem;color:var(--dim);margin-bottom:8px;font-weight:400">Cargá el resultado de cada llave. Si hay empate, indicá quién pasó.</p>
+        <select class="fi" id="aBrRound" style="margin-bottom:8px;border-radius:10px" onchange="renderAdminBracket()">
+          <option value="">— Seleccioná ronda —</option>
+          <option value="R32">16avos de Final</option>
+          <option value="R16">Octavos de Final</option>
+          <option value="QF">Cuartos de Final</option>
+          <option value="SF">Semifinales</option>
+          <option value="F">Final</option>
+        </select>
+        <div id="aBracketMatches"></div>
+        <button class="bsr" onclick="saveAdminBracket()">Guardar resultados ronda</button>
+      </div>
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.05)">
         <div class="admin-h">Ventana fase final</div>
         <p style="font-size:0.62rem;color:var(--dim);margin-bottom:8px;font-weight:400">Se abre/cierra automáticamente. Forzar:</p>
         <button class="baf" onclick="adminToggleFinal()">Estado: <span id="finStatus">auto</span></button>
@@ -555,7 +569,7 @@ const PREV={R16:"R32",QF:"R16",SF:"QF",F:"SF"};
 // ═══════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════
-let users={}, rr={}, rb={}, afForce=null;
+let users={}, rr={}, rb={}, brr={}, afForce=null;
 let cu=null, cg="A";
 
 function $(x){return document.getElementById(x)}
@@ -586,12 +600,14 @@ async function init(){
       users=d.users||{};
       rr=d.rr||{};
       rb=d.rb||{};
+      brr=d.brr||{};
       afForce=d.afForce!==undefined?d.afForce:null;
     }
     // live listeners
     onValue(ref(db,"users"),(s)=>{users=s.val()||{};updateStats();if(cu&&!cu.isAdmin){const u=users[cu.nick];if(u){cu=u;}}});
     onValue(ref(db,"rr"),(s)=>{rr=s.val()||{};updateStats();});
     onValue(ref(db,"rb"),(s)=>{rb=s.val()||{};});
+    onValue(ref(db,"brr"),(s)=>{brr=s.val()||{};updateStats();});
     onValue(ref(db,"afForce"),(s)=>{afForce=s.val();updateFinStatus();});
   }catch(e){console.error("Firebase init error",e);}
   finally{$("loadingOverlay").classList.add("hidden");updateStats();tick();}
@@ -652,6 +668,7 @@ async function joinFinal(){
 // ═══════════════════════════════════════
 function calcPts(u){
   let p=0;
+  // group stage points
   for(const[mid,r] of Object.entries(rr)){
     const pr=u.pred&&u.pred[mid];if(!pr)continue;
     const rh=+r.h,ra=+r.a,ph=+pr.h,pa=+pr.a;
@@ -660,9 +677,22 @@ function calcPts(u){
     const rw=rh>ra?1:rh<ra?-1:0,pw=ph>pa?1:ph<pa?-1:0;
     if(rw===pw)p+=1;
   }
-  for(const[bid,winner] of Object.entries(rb)){
-    const pick=u.bracket&&u.bracket[bid];
-    if(pick&&pick.split("|")[0]===winner)p+=2;
+  // bracket points: 3 exact, 1 correct qualifier (using brWinner which handles penalties)
+  for(const[bid,res] of Object.entries(brr)){
+    const pick=u.bracket&&u.bracket[bid];if(!pick)continue;
+    const pName=pick.split("|")[0];
+    const rh=+res.h,ra=+res.a;
+    // who actually passed (admin sets winner explicitly if draw, else it's the team with more goals)
+    const actualWinner=res.winner||null;
+    const ph=+(pName===res.hn?1:0),pa=+(pName===res.an?1:0);
+    // 3pts: exact score AND right team
+    if(res.h!==undefined&&res.a!==undefined){
+      const userPick=u.bracketScores&&u.bracketScores[bid];
+      if(userPick&&+userPick.h===rh&&+userPick.a===ra&&pName===(actualWinner||( rh>ra?res.hn:ra>rh?res.an:null))){p+=3;continue;}
+    }
+    // 1pt: correct qualifier
+    const realWinner=actualWinner||(rh>ra?res.hn:ra>rh?res.an:null);
+    if(realWinner&&pName===realWinner)p+=1;
   }
   return p;
 }
@@ -839,6 +869,95 @@ async function saveRR(){
   GRP[g].m.forEach(m=>{const h=$(`a_${m.id}_h`),a=$(`a_${m.id}_a`);if(!h||!a)return;if(h.value!==""&&a.value!==""){updates[m.id]={h:+h.value,a:+a.value};sv++;}});
   await fbUpdate("rr",updates);alert(`✅ ${sv} resultado(s) del Grupo ${g} guardados.`);
 }
+function renderAdminBracket(){
+  const round=$v("aBrRound"),c=$("aBracketMatches");
+  if(!round){c.innerHTML="";return;}
+  const roundData=ROUNDS.find(r=>r.id===round);if(!roundData)return;
+  let html="";
+  for(let i=0;i<roundData.c;i++){
+    const bid=`${round}_${i}`;
+    const res=brr[bid]||{};
+    // get team names from rb (user picks) or R32 slots
+    const teams=getBrTeams(round,i,rb);
+    const t1=teams[0]||{n:"Equipo 1",f:"🏳"};
+    const t2=teams[1]||{n:"Equipo 2",f:"🏳"};
+    const isDrawn=res.h!==undefined&&res.a!==undefined&&+res.h===+res.a;
+    html+=`<div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:0.68rem">
+      <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px;color:var(--off);font-weight:600">${t1.f} ${t1.n} vs ${t2.f} ${t2.n}</div>
+      <div style="display:grid;grid-template-columns:1fr 30px 10px 30px 1fr;align-items:center;gap:4px;margin-bottom:${isDrawn||res.h===res.a?"8px":"0"}">
+        <span style="text-align:right;font-size:0.64rem;color:var(--dim)">${t1.n}</span>
+        <input type="number" class="ai" min="0" max="20" value="${res.h!==undefined?res.h:""}" placeholder="–" id="br_${bid}_h" oninput="checkBrDraw('${bid}','${t1.n}','${t1.f}','${t2.n}','${t2.f}')">
+        <span style="color:var(--dim);text-align:center">-</span>
+        <input type="number" class="ai" min="0" max="20" value="${res.a!==undefined?res.a:""}" placeholder="–" id="br_${bid}_a" oninput="checkBrDraw('${bid}','${t1.n}','${t1.f}','${t2.n}','${t2.f}')">
+        <span style="font-size:0.64rem;color:var(--dim)">${t2.n}</span>
+      </div>
+      <div id="br_${bid}_winner" style="${isDrawn?"":"display:none"}">
+        <div style="font-size:0.6rem;color:#6fa8f5;margin-bottom:4px;font-weight:700">EMPATE — ¿Quién pasó?</div>
+        <div style="display:flex;gap:5px">
+          <button onclick="setBrWinner('${bid}','${t1.n}')" style="flex:1;padding:5px;border-radius:6px;border:none;font-size:0.64rem;font-weight:700;cursor:pointer;transition:all .2s;background:${res.winner===t1.n?"var(--lime)":"rgba(255,255,255,0.08)"};color:${res.winner===t1.n?"#000":"var(--off)"}">${t1.f} ${t1.n}</button>
+          <button onclick="setBrWinner('${bid}','${t2.n}')" style="flex:1;padding:5px;border-radius:6px;border:none;font-size:0.64rem;font-weight:700;cursor:pointer;transition:all .2s;background:${res.winner===t2.n?"var(--lime)":"rgba(255,255,255,0.08)"};color:${res.winner===t2.n?"#000":"var(--off)"}">${t2.f} ${t2.n}</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  c.innerHTML=html;
+}
+
+function checkBrDraw(bid,n1,f1,n2,f2){
+  const h=$(`br_${bid}_h`),a=$(`br_${bid}_a`);
+  const winDiv=$(`br_${bid}_winner`);
+  if(!h||!a||!winDiv)return;
+  const hv=h.value,av=a.value;
+  const isDraw=hv!==""&&av!==""&&+hv===+av;
+  winDiv.style.display=isDraw?"":"none";
+}
+
+const pendingBrWinners={};
+function setBrWinner(bid,name){
+  pendingBrWinners[bid]=name;
+  // refresh UI
+  const round=$v("aBrRound");
+  renderAdminBracket();
+  // re-apply pending winners to brr temporarily for UI
+  if(!brr[bid])brr[bid]={};
+  brr[bid].winner=name;
+  renderAdminBracket();
+}
+
+async function saveAdminBracket(){
+  const round=$v("aBrRound");if(!round)return alert("Seleccioná una ronda.");
+  const roundData=ROUNDS.find(r=>r.id===round);if(!roundData)return;
+  const updates={};let sv=0;
+  for(let i=0;i<roundData.c;i++){
+    const bid=`${round}_${i}`;
+    const h=$(`br_${bid}_h`),a=$(`br_${bid}_a`);
+    if(!h||!a||h.value===""||a.value==="")continue;
+    const hv=+h.value,av=+a.value;
+    const teams=getBrTeams(round,i,rb);
+    const t1=teams[0]||{n:"",f:""};
+    const t2=teams[1]||{n:"",f:""};
+    const entry={h:hv,a:av,hn:t1.n,an:t2.n};
+    // who won
+    if(hv>av) entry.winner=t1.n;
+    else if(av>hv) entry.winner=t2.n;
+    else {
+      // draw — need explicit winner
+      const w=brr[bid]&&brr[bid].winner;
+      if(!w){alert(`Partido ${i+1} de ${round} termina en empate — indicá quién pasó.`);return;}
+      entry.winner=w;
+    }
+    // also update rb (real bracket winner) for downstream display
+    updates[bid]=entry;
+    rb[bid]=entry.winner+"|"+(entry.winner===t1.n?t1.f:t2.f);
+    sv++;
+  }
+  if(!sv)return alert("No hay resultados para guardar.");
+  await fbUpdate("brr",updates);
+  await fbUpdate("rb",Object.fromEntries(Object.entries(rb)));
+  updateStats();
+  alert(`✅ ${sv} resultado(s) de ${round} guardados.`);
+}
+
 async function adminToggleFinal(){
   const nv=afForce===null?true:afForce===true?false:null;
   await fbSet("afForce",nv);
@@ -874,7 +993,7 @@ window.doReg=doReg;window.doLogin=doLogin;window.doLogout=doLogout;
 window.openModal=openModal;window.swModal=swModal;window.closeModal=closeModal;window.closeBg=closeBg;
 window.showPage=showPage;window.swG=swG;window.savePred=savePred;window.saveGroup=saveGroup;
 window.joinFinal=joinFinal;window.pickBr=pickBr;window.saveBracket=saveBracket;
-window.saveRR=saveRR;window.renderAdminM=renderAdminM;window.adminToggleFinal=adminToggleFinal;
+window.saveRR=saveRR;window.renderAdminM=renderAdminM;window.adminToggleFinal=adminToggleFinal;window.renderAdminBracket=renderAdminBracket;window.saveAdminBracket=saveAdminBracket;window.checkBrDraw=checkBrDraw;window.setBrWinner=setBrWinner;
 
 tick();setInterval(tick,30000);
 init();
