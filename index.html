@@ -311,6 +311,8 @@ h1 .g{color:var(--lime)}
   </div>
 </nav>
 
+<!-- TOP SECTION -->
+<div id="topSection">
 <!-- HERO -->
 <div class="hero">
   <div class="hero-left">
@@ -367,6 +369,7 @@ h1 .g{color:var(--lime)}
 </div>
 
 <div class="divider" style="margin-bottom:0"></div>
+</div><!-- /topSection -->
 
 <!-- MAIN -->
 <div class="wrap">
@@ -977,6 +980,8 @@ function showPage(p,btn){
   const pg=$("page"+p.charAt(0).toUpperCase()+p.slice(1));if(pg)pg.classList.add("active");
   document.querySelectorAll(".ntab").forEach(t=>t.classList.remove("active"));
   if(btn)btn.classList.add("active");
+  const hideTop=p==="eliminacion"||p==="posiciones";
+  $("topSection").style.display=hideTop?"none":"";
   if(p==="eliminacion")renderBracket();
   if(p==="posiciones")renderLB();
   if(p==="encuesta"&&cu&&!cu.isAdmin)renderSurvey();
@@ -1001,3 +1006,4 @@ init();
 </script>
 </body>
 </html>
+
