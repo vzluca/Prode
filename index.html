@@ -314,7 +314,7 @@ h1 .g{color:var(--lime)}
 <!-- TOP SECTION -->
 <div id="topSection">
 <!-- HERO -->
-<div class="hero">
+<div class="hero" id="heroSection">
   <div class="hero-left">
     <div class="hero-tag"><span class="dot"></span>Copa Mundial de la FIFA · Canadá · México · EE.UU.</div>
     <h1>PRODE<br>MUNDIAL</h1>
@@ -647,6 +647,7 @@ function doLogout(){cu=null;updateNav();$("loginPrompt").classList.remove("hidde
 function updateNav(){
   const nr=$("nright");
   $("heroCtas").classList.toggle("hidden",!!cu);
+  $("heroSection").classList.toggle("hidden",!!cu);
   if(!cu){nr.innerHTML=`<button class="btn-outline" onclick="openModal('login')">Ingresar</button><button class="btn-solid" onclick="openModal('register')">Anotarme</button>`;$("adminC").classList.add("hidden");return;}
   const ini=cu.nick.substring(0,2).toUpperCase();
   const bg=cu.isAdmin?"#5a3fd4":AVCOLS[0];
@@ -1006,4 +1007,3 @@ init();
 </script>
 </body>
 </html>
-
