@@ -311,8 +311,9 @@ h1 .g{color:var(--lime)}
   </div>
 </nav>
 
+<div id="topSection">
 <!-- HERO -->
-<div class="hero">
+<div class="hero" id="heroSection">
   <div class="hero-left">
     <div class="hero-tag"><span class="dot"></span>Copa Mundial de la FIFA · Canadá · México · EE.UU.</div>
     <h1>PRODE<br>MUNDIAL</h1>
@@ -367,6 +368,7 @@ h1 .g{color:var(--lime)}
 </div>
 
 <div class="divider" style="margin-bottom:0"></div>
+</div><!-- /topSection -->
 
 <!-- MAIN -->
 <div class="wrap">
@@ -712,10 +714,11 @@ async function doLogin(){
 }
 function loginAs(u){cu=u;closeModal();afterLogin();}
 function afterLogin(){updateNav();renderSurvey();renderBracket();updateStats();}
-function doLogout(){cu=null;updateNav();$("loginPrompt").classList.remove("hidden");$("surveyPanel").classList.add("hidden");$("adminC").classList.add("hidden");renderBracket();updateStats();}
+function doLogout(){cu=null;updateNav();$("loginPrompt").classList.remove("hidden");$("surveyPanel").classList.add("hidden");$("adminC").classList.add("hidden");const ts=$("topSection");if(ts)ts.style.display="";renderBracket();updateStats();}
 function updateNav(){
   const nr=$("nright");
   $("heroCtas").classList.toggle("hidden",!!cu);
+  $("topSection").classList.toggle("hidden",!!cu);
   if(!cu){nr.innerHTML=`<button class="btn-outline" onclick="openModal('login')">Ingresar</button><button class="btn-solid" onclick="openModal('register')">Anotarme</button>`;$("adminC").classList.add("hidden");return;}
   const ini=cu.nick.substring(0,2).toUpperCase();
   const bg=cu.isAdmin?"#5a3fd4":AVCOLS[0];
@@ -1049,6 +1052,8 @@ function showPage(p,btn){
   const pg=$("page"+p.charAt(0).toUpperCase()+p.slice(1));if(pg)pg.classList.add("active");
   document.querySelectorAll(".ntab").forEach(t=>t.classList.remove("active"));
   if(btn)btn.classList.add("active");
+  const ts=$("topSection");
+  if(ts)ts.style.display=(p==="eliminacion"||p==="posiciones"||cu)?"none":"";
   if(p==="eliminacion")renderBracket();
   if(p==="posiciones")renderLB();
   if(p==="encuesta"&&cu&&!cu.isAdmin)renderSurvey();
