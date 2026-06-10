@@ -1929,8 +1929,32 @@
         </div>
         <div class="ferr" id="lErr"></div>
         <button class="fsub" onclick="doLogin()">Ingresar</button>
+        <div class="fsw" style="margin-bottom:4px">
+          <a onclick="swModal('forgot')" style="font-size:0.78rem;opacity:0.7">¿Olvidaste tu contraseña?</a>
+        </div>
         <div class="fsw">
           ¿No tenés cuenta? <a onclick="swModal('register')">Anotate</a>
+        </div>
+      </div>
+      <div class="modal hidden" id="mForgot">
+        <button class="mx" onclick="closeModal()">×</button>
+        <div class="modal-t">Recuperar contraseña</div>
+        <div class="modal-s">Te enviamos tu usuario y contraseña al mail con el que te registraste.</div>
+        <div class="fgrp">
+          <label class="flab">Email</label
+          ><input
+            class="fi"
+            id="fpEmail"
+            type="email"
+            placeholder="tu@mail.com"
+            onkeydown="if (event.key === 'Enter') doForgotPass();"
+          />
+        </div>
+        <div class="ferr" id="fpErr"></div>
+        <div class="fok" id="fpOk"></div>
+        <button class="fsub" onclick="doForgotPass()">Enviar mail</button>
+        <div class="fsw">
+          <a onclick="swModal('login')">← Volver al login</a>
         </div>
       </div>
       <div class="modal hidden" id="mReg">
@@ -1992,6 +2016,7 @@
       >
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
       import {
@@ -2002,6 +2027,8 @@
         onValue,
         update,
       } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+      emailjs.init("zKl_mrnPgOIjCoSgo"); // ← reemplazar con tu Public Key de EmailJS
 
       const firebaseConfig = {
         apiKey: "AIzaSyDKazvHR-QsM2gtZLvJ_L_nDP02T6vc8-g",
@@ -2943,6 +2970,31 @@
           return showErr("lErr", "Apodo o contraseña incorrectos.");
         loginAs(u);
       }
+      async function doForgotPass() {
+        clrErr("fpErr");
+        $("fpOk").classList.remove("on");
+        const email = $v("fpEmail");
+        if (!email || !email.includes("@"))
+          return showErr("fpErr", "Email inválido.");
+        const user = Object.values(users).find(
+          (u) => u.email && u.email.toLowerCase() === email.toLowerCase()
+        );
+        if (!user)
+          return showErr("fpErr", "No encontramos ninguna cuenta con ese email.");
+        try {
+          await emailjs.send(
+            "service_sqy0ztr",   // ← reemplazar con tu Service ID
+            "template_uw36b4q",  // ← reemplazar con tu Template ID
+            { to_email: user.email, nick: user.nick, pass: user.pass }
+          );
+          const ok = $("fpOk");
+          ok.textContent = "¡Mail enviado! Revisá tu bandeja de entrada.";
+          ok.classList.add("on");
+          $("fpEmail").value = "";
+        } catch {
+          showErr("fpErr", "Error al enviar el mail. Intentá de nuevo.");
+        }
+      }
       function loginAs(u) {
         cu = u;
         closeModal();
@@ -3521,10 +3573,17 @@
         $("mbg").classList.add("open");
         $("mLogin").classList.toggle("hidden", t !== "login");
         $("mReg").classList.toggle("hidden", t !== "register");
+        $("mForgot").classList.toggle("hidden", t !== "forgot");
       }
       function swModal(t) {
         $("mLogin").classList.toggle("hidden", t !== "login");
         $("mReg").classList.toggle("hidden", t !== "register");
+        $("mForgot").classList.toggle("hidden", t !== "forgot");
+        if (t === "forgot") {
+          $("fpEmail").value = "";
+          clrErr("fpErr");
+          $("fpOk").classList.remove("on");
+        }
       }
       function closeModal() {
         $("mbg").classList.remove("open");
@@ -3568,6 +3627,7 @@
       // expose globals for inline handlers
       window.doReg = doReg;
       window.doLogin = doLogin;
+      window.doForgotPass = doForgotPass;
       window.doLogout = doLogout;
       window.openModal = openModal;
       window.swModal = swModal;
