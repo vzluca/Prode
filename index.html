@@ -710,7 +710,7 @@
       }
       .mrow {
         display: grid;
-        grid-template-columns: 1fr 40px 14px 40px 1fr auto;
+        grid-template-columns: 1fr 40px 14px 40px 1fr 36px;
         align-items: center;
         gap: 6px;
         padding: 9px 0;
@@ -1560,7 +1560,7 @@
 
         /* CARD / MATCH ROWS */
         .card { padding: 14px; border-radius: 12px; }
-        .mrow { grid-template-columns: 1fr 34px 10px 34px 1fr auto; gap: 3px; padding: 7px 0; }
+        .mrow { grid-template-columns: 1fr 34px 10px 34px 1fr 36px; gap: 3px; padding: 7px 0; }
         .mt { font-size: 0.68rem; gap: 3px; min-width: 0; overflow: hidden; }
         .mfl { font-size: 0.8rem; flex-shrink: 0; }
         .si { width: 34px; height: 32px; font-size: 1.1rem; border-radius: 6px; }
@@ -1931,16 +1931,6 @@
               ><strong>Cierre:</strong> 10 de junio de 2026 · Antes de México vs
               Sudáfrica</span
             >
-            <span
-              id="cd"
-              style="
-                margin-left: auto;
-                font-family: &quot;Bebas Neue&quot;, sans-serif;
-                font-size: 0.95rem;
-                letter-spacing: 2px;
-                color: var(--lime);
-              "
-            ></span>
           </div>
           <div id="dlPassed" class="dl-passed hidden">
             🔒 Fecha límite pasada. No se pueden modificar pronósticos.
@@ -3338,15 +3328,6 @@
         renderSurvey();
         renderBracket();
         updateStats();
-        if (!cu.isAdmin) {
-          setTimeout(() => {
-            $("mbg").classList.add("open");
-            $("mLogin").classList.add("hidden");
-            $("mReg").classList.add("hidden");
-            $("mForgot").classList.add("hidden");
-            $("mNotice").classList.remove("hidden");
-          }, 400);
-        }
       }
       function doLogout() {
         cu = null;
