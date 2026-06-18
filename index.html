@@ -50,8 +50,30 @@
         border-radius: 2px;
       }
 
-      /* ── HERO BG ── */
+      @media (max-width: 600px) {
       .hero-bg-wrap {
+      /* Improved small-screen layout */
+      @media (max-width: 420px) {
+        .mrow {
+          display: flex;
+          flex-direction: column;
+          align-items: stretch;
+          gap: 6px;
+          padding: 8px 0;
+        }
+        .mrow .mt {
+          display: flex;
+          justify-content: space-between;
+          font-size: 0.78rem;
+        }
+        .mrow .si {
+          width: 56px;
+          height: 44px;
+          font-size: 1.1rem;
+          margin: 0 auto;
+        }
+        .br-round { min-width: 110px }
+      }
         position: fixed;
         inset: 0;
         z-index: 0;
@@ -2850,6 +2872,21 @@
         return new Date() > DL_G;
       }
 
+      // devuelve puntos que da un partido comparando resultado real y predicción
+      function ptsForMatch(real, pred) {
+        if (!real || !pred) return 0;
+        const rh = +real.h,
+          ra = +real.a,
+          ph = +pred.h,
+          pa = +pred.a;
+        if (isNaN(ph) || isNaN(pa)) return 0;
+        if (ph === rh && pa === ra) return 3;
+        const rw = rh > ra ? 1 : rh < ra ? -1 : 0,
+          pw = ph > pa ? 1 : ph < pa ? -1 : 0;
+        if (rw === pw) return 1;
+        return 0;
+      }
+
       // ═══════════════════════════════════════
       // FIREBASE HELPERS
       // ═══════════════════════════════════════
@@ -3107,7 +3144,74 @@
             actualWinner || (rh > ra ? res.hn : ra > rh ? res.an : null);
           if (realWinner && pName === realWinner) p += 1;
         }
+        // Bonus: if group stage finished, award +2 por equipo correctamente predicho como clasificado
+        const actualQ = computeAllActualQualifiers();
+        if (actualQ) {
+          const userQ = computeUserPredictedQualifiers(u);
+          if (userQ && userQ.length) {
+            for (const t of userQ) if (actualQ.includes(t)) p += 2;
+          }
+        }
         return p;
+      }
+
+      // calcula tabla de un grupo a partir de un mapa de resultados {mid:{h,a}}
+      function computeGroupStandings(resultsMap, g) {
+        const teams = (GRP[g] && GRP[g].t) || [];
+        const stats = {};
+        teams.forEach((t) => (stats[t.n] = { team: t.n, pts: 0, gf: 0, ga: 0 }));
+        (GRP[g] && GRP[g].m || []).forEach((m) => {
+          const r = resultsMap && resultsMap[m.id];
+          if (!r || r.h === undefined || r.a === undefined) return;
+          const th = m.h, ta = m.a;
+          const rh = +r.h, ra = +r.a;
+          stats[th].gf += rh; stats[th].ga += ra;
+          stats[ta].gf += ra; stats[ta].ga += rh;
+          if (rh > ra) stats[th].pts += 3;
+          else if (ra > rh) stats[ta].pts += 3;
+          else { stats[th].pts += 1; stats[ta].pts += 1 }
+        });
+        const arr = Object.values(stats);
+        arr.forEach((s) => (s.gd = s.gf - s.ga));
+        arr.sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf || a.team.localeCompare(b.team));
+        return arr;
+      }
+
+      function computeAllActualQualifiers() {
+        // ensure all group matches have real results
+        for (const g of GK) {
+          const missing = GRP[g].m.some((m) => !rr[m.id] || rr[m.id].h === undefined || rr[m.id].a === undefined);
+          if (missing) return null;
+        }
+        const qualifiers = [];
+        const thirds = [];
+        for (const g of GK) {
+          const table = computeGroupStandings(rr, g);
+          if (table.length >= 2) {
+            qualifiers.push(table[0].team, table[1].team);
+            if (table[2]) thirds.push({ team: table[2].team, pts: table[2].pts, gd: table[2].gd, gf: table[2].gf });
+          }
+        }
+        // pick best 8 thirds
+        thirds.sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf || a.team.localeCompare(b.team));
+        const best3 = thirds.slice(0, 8).map((t) => t.team);
+        return qualifiers.concat(best3);
+      }
+
+      function computeUserPredictedQualifiers(u) {
+        if (!u || !u.pred) return [];
+        const qualifiers = [];
+        const thirds = [];
+        for (const g of GK) {
+          const table = computeGroupStandings(u.pred, g);
+          if (table.length >= 2) {
+            qualifiers.push(table[0].team, table[1].team);
+            if (table[2]) thirds.push({ team: table[2].team, pts: table[2].pts, gd: table[2].gd, gf: table[2].gf });
+          }
+        }
+        thirds.sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf || a.team.localeCompare(b.team));
+        const best3 = thirds.slice(0, 8).map((t) => t.team);
+        return qualifiers.concat(best3);
       }
       function getLB() {
         return Object.values(users)
@@ -3203,13 +3307,20 @@
           const pr = (u.pred && u.pred[m.id]) || {},
             hv = pr.h !== undefined ? pr.h : "",
             av = pr.a !== undefined ? pr.a : "";
+          // compute points for this match if real result exists
+          const real = rr[m.id];
+          const mp = ptsForMatch(real, pr);
+          const mpColor = mp === 3 ? 'var(--red)' : mp === 1 ? 'var(--lime)' : 'var(--dim)';
+          const mpText = `+${mp}`;
           html += `<div class="mrow ${lk ? "lk" : ""}"><div class="mt"><span class="mfl">${m.hf}</span>${m.h}</div>
       <input type="number" class="si" min="0" max="20" value="${hv}" placeholder="–" ${!can ? "disabled" : ""}
         oninput="savePred('${m.id}','h',this.value)" id="i_${m.id}_h">
       <div class="vsep">-</div>
       <input type="number" class="si" min="0" max="20" value="${av}" placeholder="–" ${!can ? "disabled" : ""}
         oninput="savePred('${m.id}','a',this.value)" id="i_${m.id}_a">
-      <div class="mt r"><span class="mfl">${m.af}</span>${m.a}</div></div>`;
+      <div class="mt r"><span class="mfl">${m.af}</span>${m.a}</div>
+      <div style="display:flex;align-items:center;margin-left:8px"> <div class=\"lnote\" style=\"margin-left:12px;color:${mpColor};font-weight:800;\">${mpText}</div></div>
+      </div>`;
         });
         const gi = GK.indexOf(g),
           prev = gi > 0 ? GK[gi - 1] : null,
@@ -3570,6 +3681,11 @@
       // MODALS / PAGES / TICK
       // ═══════════════════════════════════════
       function openModal(t) {
+        // block register modal after deadline
+        if (t === "register" && isDLP()) {
+          alert("Ya pasó el tiempo para anotarse.");
+          return;
+        }
         $("mbg").classList.add("open");
         $("mLogin").classList.toggle("hidden", t !== "login");
         $("mReg").classList.toggle("hidden", t !== "register");
@@ -3654,4 +3770,6 @@
     </script>
   </body>
 </html>
+
+
 
