@@ -50,9 +50,13 @@
         border-radius: 2px;
       }
 
-      @media (max-width: 600px) {
       .hero-bg-wrap {
-      /* Improved small-screen layout */
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        overflow: hidden;
+      }
       @media (max-width: 420px) {
         .mrow {
           display: flex;
@@ -72,13 +76,7 @@
           font-size: 1.1rem;
           margin: 0 auto;
         }
-        .br-round { min-width: 110px }
-      }
-        position: fixed;
-        inset: 0;
-        z-index: 0;
-        pointer-events: none;
-        overflow: hidden;
+        .br-round { min-width: 110px; }
       }
       .hero-bg-wrap::before {
         content: "";
@@ -3770,6 +3768,3 @@
     </script>
   </body>
 </html>
-
-
-
