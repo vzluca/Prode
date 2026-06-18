@@ -1633,6 +1633,126 @@
         /* DEADLINE BANNER */
         .dl-banner { font-size: 0.66rem; padding: 10px 12px; gap: 7px; }
         .dl-passed { font-size: 0.66rem; padding: 10px 12px; }
+
+        /* GROUP STANDINGS mobile */
+        .grp-st-head { grid-template-columns: 16px 1fr 26px 20px 26px 20px; gap: 3px; padding: 3px 6px; }
+        .grp-st-row { grid-template-columns: 16px 1fr 26px 20px 26px 20px; gap: 3px; padding: 5px 6px; }
+        .grp-st-name { font-size: 0.6rem; }
+        .grp-st-num { font-size: 0.58rem; }
+        .grp-st-badge { font-size: 0.4rem; padding: 1px 3px; }
+        .grp-st-note { font-size: 0.5rem; }
+        .grp-st-hdr { font-size: 0.56rem; }
+      }
+
+      /* ── GROUP STANDINGS ── */
+      .grp-st {
+        margin-top: 16px;
+        padding-top: 14px;
+        border-top: 1px solid rgba(255, 255, 255, 0.07);
+      }
+      .grp-st-hdr {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin-bottom: 8px;
+        font-size: 0.6rem;
+        font-weight: 800;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: var(--off);
+      }
+      .grp-st-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--lime);
+        flex-shrink: 0;
+      }
+      .grp-st-sub {
+        font-size: 0.54rem;
+        font-weight: 500;
+        color: var(--dim);
+        letter-spacing: 0.5px;
+        text-transform: none;
+        margin-left: auto;
+      }
+      .grp-st-head {
+        display: grid;
+        grid-template-columns: 18px 1fr 28px 22px 30px 22px;
+        gap: 4px;
+        padding: 3px 8px;
+        font-size: 0.5rem;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: var(--dim);
+        text-align: center;
+      }
+      .grp-st-head span:nth-child(2) { text-align: left; }
+      .grp-st-row {
+        display: grid;
+        grid-template-columns: 18px 1fr 28px 22px 30px 22px;
+        align-items: center;
+        gap: 4px;
+        padding: 6px 8px;
+        border-radius: 8px;
+        margin-bottom: 2px;
+      }
+      .grp-st-row.qualify { background: rgba(0, 168, 107, 0.08); }
+      .grp-st-row.third { background: rgba(251, 191, 36, 0.05); }
+      .grp-st-pos {
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 0.9rem;
+        text-align: center;
+        line-height: 1;
+      }
+      .grp-st-team {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        min-width: 0;
+      }
+      .grp-st-flag { font-size: 0.8rem; flex-shrink: 0; line-height: 1; }
+      .grp-st-name {
+        font-size: 0.66rem;
+        font-weight: 600;
+        color: var(--off);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .grp-st-pts {
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 1rem;
+        color: var(--white);
+        text-align: center;
+      }
+      .grp-st-num {
+        font-size: 0.64rem;
+        font-weight: 600;
+        color: var(--dim);
+        text-align: center;
+      }
+      .grp-st-badge {
+        font-size: 0.44rem;
+        font-weight: 800;
+        padding: 1px 4px;
+        border-radius: 4px;
+        margin-left: 3px;
+        white-space: nowrap;
+        flex-shrink: 0;
+        letter-spacing: 0.5px;
+      }
+      .grp-st-badge.q { color: var(--lime); background: rgba(0, 168, 107, 0.2); }
+      .grp-st-badge.t { color: #fbbf24; background: rgba(251, 191, 36, 0.15); }
+      .grp-st-badge.e { color: var(--dim); background: rgba(255, 255, 255, 0.05); }
+      .grp-st-note {
+        font-size: 0.53rem;
+        color: var(--dim);
+        margin-top: 8px;
+        padding: 0 8px;
+        font-weight: 500;
+        line-height: 1.6;
       }
     </style>
   </head>
@@ -2144,6 +2264,20 @@
           <span style="color:var(--dim);font-size:0.72rem">Hubo un problema temporal con el código que puede haber afectado la visualización de algunos partidos.</span>
         </div>
         <button class="fsub" onclick="closeModal()" style="background:var(--lime);color:#000;font-weight:900">Entendido ✓</button>
+      </div>
+      <div class="modal hidden" id="mClosed">
+        <button class="mx" onclick="closeModal()">×</button>
+        <div style="font-size:2.5rem;margin-bottom:10px">🔒</div>
+        <div class="modal-t" style="color:var(--red);font-size:1.3rem;letter-spacing:2px">INSCRIPCIÓN CERRADA</div>
+        <div class="modal-s" style="line-height:1.9">
+          El torneo comenzó el <strong style="color:var(--white)">11 de junio de 2026</strong>. Ya no se aceptan nuevas inscripciones.
+          <br><br>
+          <span style="color:var(--dim)">Si ya tenés cuenta, podés ingresar normalmente.</span>
+        </div>
+        <button class="fsub" style="background:rgba(255,255,255,0.07);color:var(--dim);cursor:default;pointer-events:none">🔒 Inscripciones cerradas</button>
+        <div class="fsw" style="margin-top:12px">
+          ¿Ya tenés cuenta? <a onclick="swModal('login')">Ingresá</a>
+        </div>
       </div>
     </div>
 
@@ -3284,6 +3418,74 @@
         if (rw === pw) return 1;
         return 0;
       }
+      function calcGroupStandings(g) {
+        const grp = GRP[g];
+        const teams = {};
+        grp.t.forEach(t => {
+          teams[t.n] = { n: t.n, f: t.f, pts: 0, pj: 0, pg: 0, pe: 0, pp: 0, gf: 0, gc: 0 };
+        });
+        let hasPreds = false;
+        grp.m.forEach(m => {
+          const pr = cu.pred && cu.pred[m.id];
+          if (!pr || pr.h === undefined || pr.h === null || pr.a === undefined || pr.a === null) return;
+          const ph = +pr.h, pa = +pr.a;
+          if (isNaN(ph) || isNaN(pa)) return;
+          hasPreds = true;
+          const ht = teams[m.h], at = teams[m.a];
+          if (!ht || !at) return;
+          ht.pj++; at.pj++;
+          ht.gf += ph; ht.gc += pa;
+          at.gf += pa; at.gc += ph;
+          if (ph > pa) { ht.pg++; ht.pts += 3; at.pp++; }
+          else if (pa > ph) { at.pg++; at.pts += 3; ht.pp++; }
+          else { ht.pe++; at.pe++; ht.pts++; at.pts++; }
+        });
+        if (!hasPreds) return null;
+        return Object.values(teams).sort((a, b) => {
+          if (b.pts !== a.pts) return b.pts - a.pts;
+          const gdA = a.gf - a.gc, gdB = b.gf - b.gc;
+          if (gdB !== gdA) return gdB - gdA;
+          return b.gf - a.gf;
+        });
+      }
+      function renderGroupStandings(g) {
+        const standings = calcGroupStandings(g);
+        if (!standings) return '';
+        const totalM = GRP[g].m.length;
+        const playedM = standings.reduce((s, t) => s + t.pj, 0) / 2;
+        const rows = standings.map((t, i) => {
+          const gd = t.gf - t.gc;
+          const gdStr = gd > 0 ? `+${gd}` : `${gd}`;
+          const isQ = i < 2, isT = i === 2;
+          const posColor = isQ ? 'var(--lime)' : isT ? '#fbbf24' : 'var(--dim)';
+          const gdColor = gd > 0 ? 'var(--lime)' : gd < 0 ? '#f87171' : 'var(--dim)';
+          const badge = isQ
+            ? `<span class="grp-st-badge q">16vos</span>`
+            : isT
+            ? `<span class="grp-st-badge t">3°</span>`
+            : `<span class="grp-st-badge e">—</span>`;
+          return `<div class="grp-st-row${isQ ? ' qualify' : isT ? ' third' : ''}">
+            <div class="grp-st-pos" style="color:${posColor}">${i + 1}</div>
+            <div class="grp-st-team"><span class="grp-st-flag">${t.f}</span><span class="grp-st-name">${t.n}</span>${badge}</div>
+            <div class="grp-st-pts">${t.pts}</div>
+            <div class="grp-st-num">${t.pj}</div>
+            <div class="grp-st-num" style="color:${gdColor}">${gdStr}</div>
+            <div class="grp-st-num">${t.gf}</div>
+          </div>`;
+        }).join('');
+        return `<div class="grp-st">
+          <div class="grp-st-hdr">
+            <span class="grp-st-dot"></span>
+            <span>Tabla proyectada</span>
+            <span class="grp-st-sub">${playedM}/${totalM} partidos cargados</span>
+          </div>
+          <div class="grp-st-head">
+            <span></span><span>Equipo</span><span>Pts</span><span>PJ</span><span>DG</span><span>GF</span>
+          </div>
+          ${rows}
+          <div class="grp-st-note">✓ Clasifican 1° y 2° directamente · el 3° disputa el repechaje de mejores terceros (pasan los 8 mejores de los 12 grupos)</div>
+        </div>`;
+      }
       function getLB() {
         return Object.values(users)
           .map((u) => ({ nick: u.nick, pts: calcPts(u), inF: u.inFinal }))
@@ -3405,7 +3607,7 @@
         $("gcontent").innerHTML =
           `<div class="card"><div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><div class="card-title">GRUPO ${g}</div>${lk ? "<span class='badge-locked'>BLOQUEADO</span>" : ""}</div>
     <div class="card-sub">${grp.m.length} partidos · ${grp.t.map((t) => t.n).join(", ")}</div>
-    <div class="chips">${chips}</div>${html}${acts}
+    <div class="chips">${chips}</div>${html}${renderGroupStandings(g)}${acts}
     <div class="pb-wrap"><div class="pb"><div class="pbf" style="width:${pct}%"></div></div>
     <div class="pbl"><span>${lkn}/12 grupos guardados</span><span>${pct}%</span></div></div>
     <div style="display:flex;gap:7px;margin-top:11px">
@@ -3750,17 +3952,21 @@
       // MODALS / PAGES / TICK
       // ═══════════════════════════════════════
       function openModal(t) {
+        if (t === "register") t = "closed";
         $("mbg").classList.add("open");
         $("mLogin").classList.toggle("hidden", t !== "login");
         $("mReg").classList.toggle("hidden", t !== "register");
         $("mForgot").classList.toggle("hidden", t !== "forgot");
         $("mNotice").classList.toggle("hidden", t !== "notice");
+        $("mClosed").classList.toggle("hidden", t !== "closed");
       }
       function swModal(t) {
+        if (t === "register") t = "closed";
         $("mLogin").classList.toggle("hidden", t !== "login");
         $("mReg").classList.toggle("hidden", t !== "register");
         $("mForgot").classList.toggle("hidden", t !== "forgot");
         $("mNotice").classList.toggle("hidden", t !== "notice");
+        $("mClosed").classList.toggle("hidden", t !== "closed");
         if (t === "forgot") {
           $("fpEmail").value = "";
           clrErr("fpErr");
