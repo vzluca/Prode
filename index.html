@@ -4135,11 +4135,6 @@
         if (diffG <= 0) {
           $("dlBanner").classList.add("hidden");
           $("dlPassed").classList.remove("hidden");
-        } else {
-          const d = Math.floor(diffG / 86400000),
-            h = Math.floor((diffG % 86400000) / 3600000),
-            m = Math.floor((diffG % 3600000) / 60000);
-          $("cd").textContent = d > 0 ? `${d}d ${h}h ${m}m` : `${h}h ${m}m`;
         }
         $("navLock").textContent = isBrOpen() ? "🔓" : "🔒";
       }
