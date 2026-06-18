@@ -50,33 +50,13 @@
         border-radius: 2px;
       }
 
+      /* ── HERO BG ── */
       .hero-bg-wrap {
         position: fixed;
         inset: 0;
         z-index: 0;
         pointer-events: none;
         overflow: hidden;
-      }
-      @media (max-width: 420px) {
-        .mrow {
-          display: flex;
-          flex-direction: column;
-          align-items: stretch;
-          gap: 6px;
-          padding: 8px 0;
-        }
-        .mrow .mt {
-          display: flex;
-          justify-content: space-between;
-          font-size: 0.78rem;
-        }
-        .mrow .si {
-          width: 56px;
-          height: 44px;
-          font-size: 1.1rem;
-          margin: 0 auto;
-        }
-        .br-round { min-width: 110px; }
       }
       .hero-bg-wrap::before {
         content: "";
@@ -192,30 +172,6 @@
         cursor: pointer;
         border-radius: 100px;
         transition: all 0.2s;
-      }
-      .btn-outline {
-        background: none;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        color: var(--off);
-        font-family: "Figtree", sans-serif;
-        font-weight: 600;
-        font-size: 0.68rem;
-        letter-spacing: 1px;
-        padding: 6px 14px;
-        cursor: pointer;
-        border-radius: 100px;
-      }
-      .btn-solid {
-        background: var(--red);
-        border: none;
-        color: var(--white);
-        font-family: "Figtree", sans-serif;
-        font-weight: 800;
-        font-size: 0.68rem;
-        letter-spacing: 1px;
-        padding: 6px 14px;
-        cursor: pointer;
-        border-radius: 100px;
       }
       .btn-ghost:hover {
         border-color: rgba(255, 255, 255, 0.3);
@@ -1504,65 +1460,119 @@
       }
 
       @media (max-width: 600px) {
-        .ntab {
-          padding: 0 10px;
-          font-size: 0.6rem;
-          letter-spacing: 1px;
-        }
-        h1 {
-          font-size: 3.5rem;
-        }
-        .hero {
-          padding: 44px 5vw 36px;
-          grid-template-columns: 1fr;
-        }
-        .hero-right {
-          display: none;
-        }
-        .mrow {
-          grid-template-columns: 1fr 36px 12px 36px 1fr;
-          gap: 4px;
-        }
-        .br-round {
-          min-width: 122px;
-          padding: 0 3px;
-        }
-        .kpis {
-          gap: 24px;
-        }
-        .fl-big {
-          font-size: 5rem;
-        }
-      }
-      @media (max-width: 480px) {
-        .mrow {
-          display: flex;
-          flex-direction: column;
-          align-items: stretch;
-          gap: 6px;
-          padding: 6px 0;
-        }
-        .mrow .mt,
-        .mrow .mt.r {
-          display: flex;
-          justify-content: space-between;
-          width: 100%;
-        }
-        .vsep { display: none; }
-        .mrow .si {
-          width: 68px;
-          height: 44px;
-          font-size: 1.1rem;
-          margin: 0 auto;
-        }
-        .gact { flex-direction: column; gap: 8px; }
-        .bsave { width: 100%; }
-        .br-round { min-width: 110px; }
-        nav { padding: 0 3vw; }
-        .ntabs { gap: 6px; }
-        .hero { padding: 36px 4vw 28px; }
-        .aside { order: 99; width: 100%; }
-        .wrap { grid-template-columns: 1fr; padding: 0 4vw; }
+        /* NAV */
+        nav { padding: 0 4vw; height: 48px; }
+        .nbrand { font-size: 1rem; letter-spacing: 3px; margin-right: 14px; }
+        .ntab { padding: 0 9px; font-size: 0.58rem; letter-spacing: 0.5px; gap: 3px; }
+        .nright { gap: 5px; }
+        .btn-ghost, .btn-cta { font-size: 0.6rem; padding: 5px 10px; }
+        .upill { font-size: 0.68rem; gap: 5px; }
+        .uav { width: 24px; height: 24px; font-size: 0.55rem; }
+        .btn-out { font-size: 0.6rem; padding: 3px 6px; }
+
+        /* HERO */
+        .hero { padding: 32px 4vw 24px; grid-template-columns: 1fr; gap: 0; }
+        .hero-right { display: none; }
+        h1 { font-size: 3.2rem; margin-bottom: 12px; }
+        .hero-tag { font-size: 0.55rem; margin-bottom: 12px; }
+        .hero-sub { font-size: 0.8rem; margin-bottom: 20px; }
+        .hero-ctas { margin-bottom: 24px; gap: 8px; }
+        .btn-hero, .btn-hero-o { font-size: 0.72rem; padding: 10px 18px; }
+        .kpis { gap: 20px; }
+        .kpi-n { font-size: 2.2rem; }
+        .kpi-l { font-size: 0.56rem; }
+
+        /* POT STRIP */
+        .pot-strip { padding: 14px 4vw; gap: 12px; flex-direction: column; align-items: flex-start; }
+        .pot-amt { font-size: 2.4rem; }
+        .pot-split { gap: 20px; }
+        .pot-split-n { font-size: 1.3rem; }
+        .pot-split-l { font-size: 0.54rem; }
+
+        /* RULES */
+        .rules { padding: 10px 4vw; gap: 6px; }
+        .rule-pill { font-size: 0.62rem; padding: 4px 9px; }
+        .rule-lock { display: none; }
+
+        /* WRAP / LAYOUT */
+        .wrap { padding: 0 4vw; padding-top: 14px; padding-bottom: 40px; gap: 16px; }
+
+        /* GROUP TABS */
+        .gtabs { gap: 3px; margin-bottom: 12px; }
+        .gtab { font-size: 0.62rem; padding: 5px 9px; letter-spacing: 0.5px; }
+
+        /* CARD / MATCH ROWS */
+        .card { padding: 14px; border-radius: 12px; }
+        .mrow { grid-template-columns: 1fr 34px 10px 34px 1fr; gap: 3px; padding: 7px 0; }
+        .mt { font-size: 0.7rem; gap: 4px; }
+        .mfl { font-size: 0.82rem; }
+        .si { width: 34px; height: 32px; font-size: 1.1rem; border-radius: 6px; }
+        .vsep { font-size: 0.6rem; }
+        .msep { font-size: 0.56rem; margin-top: 10px; margin-bottom: 5px; }
+        .chips { gap: 4px; margin-bottom: 10px; }
+        .chip { font-size: 0.62rem; padding: 3px 8px; }
+
+        /* ACTIONS */
+        .gact { margin-top: 14px; }
+        .bsave { font-size: 0.7rem; padding: 10px 14px; }
+        .pb-wrap { margin-top: 10px; }
+        .pbl { font-size: 0.56rem; }
+
+        /* ASIDE */
+        .aside { gap: 12px; }
+        .sc { border-radius: 12px; }
+        .pot-side { padding: 10px 14px 12px; }
+        .pot-side-n { font-size: 1.9rem; }
+        .pot-side-s { font-size: 0.58rem; }
+        .pot-sp { padding: 10px 14px; }
+        .pot-sp strong { font-size: 1rem; }
+        .pot-sp span { font-size: 0.5rem; }
+        .sc-h { padding: 12px 14px 0; font-size: 0.54rem; }
+        .lb-row { padding: 8px 14px; }
+        .lb-nm { font-size: 0.7rem; }
+        .lb-pt { font-size: 0.9rem; }
+        .lb-ptl { font-size: 0.46rem; }
+
+        /* ADMIN */
+        .admin-box { padding: 12px; border-radius: 12px; }
+        .admin-h { font-size: 0.54rem; }
+        .amr { grid-template-columns: 1fr 26px 8px 26px 1fr; gap: 3px; }
+        .ai { width: 26px; height: 26px; font-size: 0.85rem; }
+        .bsr { font-size: 0.68rem; padding: 8px; }
+        .baf { font-size: 0.65rem; padding: 7px; }
+        .fi { font-size: 0.8rem; padding: 9px 12px; }
+
+        /* FINAL LOCKED */
+        .final-locked { padding: 36px 20px; border-radius: 14px; }
+        .fl-big { font-size: 4.5rem; }
+        .fl-title { font-size: 1.4rem; letter-spacing: 2px; }
+        .fl-sub { font-size: 0.76rem; }
+        .fl-window { font-size: 0.66rem; padding: 7px 14px; }
+        .fl-fee { font-size: 0.7rem; padding: 8px 16px; }
+
+        /* BRACKET */
+        .bracket-wrap { padding: 14px; border-radius: 12px; }
+        .br-round { min-width: 112px; padding: 0 3px; }
+        .br-label { font-size: 0.5rem; letter-spacing: 1.5px; margin-bottom: 8px; }
+        .br-team { font-size: 0.64rem; padding: 5px 6px; gap: 4px; }
+        .br-tbd { font-size: 0.58rem; padding: 5px 6px; }
+
+        /* MODAL */
+        .modal { padding: 22px 18px; border-radius: 14px; }
+        .modal-t { font-size: 1.3rem; }
+        .modal-s { font-size: 0.68rem; margin-bottom: 16px; }
+        .fgrp { margin-bottom: 9px; }
+        .fi { font-size: 0.82rem; padding: 9px 12px; }
+        .fsub { font-size: 0.76rem; padding: 10px; }
+        .fsw { font-size: 0.68rem; }
+
+        /* POSICIONES */
+        .lbfr { padding: 10px 14px; gap: 7px; }
+        .sh-title { font-size: 0.62rem; letter-spacing: 1.5px; }
+
+        /* DEADLINE BANNER */
+        .dl-banner { font-size: 0.66rem; padding: 10px 12px; gap: 7px; }
+        .dl-passed { font-size: 0.66rem; padding: 10px 12px; }
       }
     </style>
   </head>
@@ -2066,6 +2076,14 @@
         <div class="fsw">
           ¿Ya tenés cuenta? <a onclick="swModal('login')">Ingresá</a>
         </div>
+      </div>
+      <div class="modal hidden" id="mNotice">
+        <div class="modal-t" style="font-size:1.2rem;letter-spacing:2px">⚠️ Aviso importante</div>
+        <div class="modal-s" style="font-size:0.78rem;line-height:1.8;color:var(--off)">
+          Si cargaste tus pronósticos <strong style="color:var(--white)">antes del 9 de junio</strong> y notás que algún resultado aparece mal o en el partido equivocado, pasate por <strong style="color:var(--lime)">Dto. Legajos</strong> y lo solucionamos.<br><br>
+          <span style="color:var(--dim);font-size:0.72rem">Hubo un problema temporal con el código que puede haber afectado la visualización de algunos partidos.</span>
+        </div>
+        <button class="fsub" onclick="closeModal()" style="background:var(--lime);color:#000;font-weight:900">Entendido ✓</button>
       </div>
     </div>
 
@@ -2820,7 +2838,7 @@
         },
       };
       const GK = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
-      const DL_G = new Date("2026-06-10T23:59:00-03:00");
+      const DL_G = new Date("2026-12-31T23:59:00-03:00");
       const BR_O = new Date("2026-06-27T00:00:00-03:00");
       const BR_C = new Date("2026-06-28T10:00:00-03:00");
       const ADMIN = "admin",
@@ -2922,21 +2940,6 @@
       }
       function isDLP() {
         return new Date() > DL_G;
-      }
-
-      // devuelve puntos que da un partido comparando resultado real y predicción
-      function ptsForMatch(real, pred) {
-        if (!real || !pred) return 0;
-        const rh = +real.h,
-          ra = +real.a,
-          ph = +pred.h,
-          pa = +pred.a;
-        if (isNaN(ph) || isNaN(pa)) return 0;
-        if (ph === rh && pa === ra) return 3;
-        const rw = rh > ra ? 1 : rh < ra ? -1 : 0,
-          pw = ph > pa ? 1 : ph < pa ? -1 : 0;
-        if (rw === pw) return 1;
-        return 0;
       }
 
       // ═══════════════════════════════════════
@@ -3094,6 +3097,15 @@
         renderSurvey();
         renderBracket();
         updateStats();
+        if (!cu.isAdmin) {
+          setTimeout(() => {
+            $("mbg").classList.add("open");
+            $("mLogin").classList.add("hidden");
+            $("mReg").classList.add("hidden");
+            $("mForgot").classList.add("hidden");
+            $("mNotice").classList.remove("hidden");
+          }, 400);
+        }
       }
       function doLogout() {
         cu = null;
@@ -3196,74 +3208,7 @@
             actualWinner || (rh > ra ? res.hn : ra > rh ? res.an : null);
           if (realWinner && pName === realWinner) p += 1;
         }
-        // Bonus: if group stage finished, award +2 por equipo correctamente predicho como clasificado
-        const actualQ = computeAllActualQualifiers();
-        if (actualQ) {
-          const userQ = computeUserPredictedQualifiers(u);
-          if (userQ && userQ.length) {
-            for (const t of userQ) if (actualQ.includes(t)) p += 2;
-          }
-        }
         return p;
-      }
-
-      // calcula tabla de un grupo a partir de un mapa de resultados {mid:{h,a}}
-      function computeGroupStandings(resultsMap, g) {
-        const teams = (GRP[g] && GRP[g].t) || [];
-        const stats = {};
-        teams.forEach((t) => (stats[t.n] = { team: t.n, pts: 0, gf: 0, ga: 0 }));
-        (GRP[g] && GRP[g].m || []).forEach((m) => {
-          const r = resultsMap && resultsMap[m.id];
-          if (!r || r.h === undefined || r.a === undefined) return;
-          const th = m.h, ta = m.a;
-          const rh = +r.h, ra = +r.a;
-          stats[th].gf += rh; stats[th].ga += ra;
-          stats[ta].gf += ra; stats[ta].ga += rh;
-          if (rh > ra) stats[th].pts += 3;
-          else if (ra > rh) stats[ta].pts += 3;
-          else { stats[th].pts += 1; stats[ta].pts += 1 }
-        });
-        const arr = Object.values(stats);
-        arr.forEach((s) => (s.gd = s.gf - s.ga));
-        arr.sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf || a.team.localeCompare(b.team));
-        return arr;
-      }
-
-      function computeAllActualQualifiers() {
-        // ensure all group matches have real results
-        for (const g of GK) {
-          const missing = GRP[g].m.some((m) => !rr[m.id] || rr[m.id].h === undefined || rr[m.id].a === undefined);
-          if (missing) return null;
-        }
-        const qualifiers = [];
-        const thirds = [];
-        for (const g of GK) {
-          const table = computeGroupStandings(rr, g);
-          if (table.length >= 2) {
-            qualifiers.push(table[0].team, table[1].team);
-            if (table[2]) thirds.push({ team: table[2].team, pts: table[2].pts, gd: table[2].gd, gf: table[2].gf });
-          }
-        }
-        // pick best 8 thirds
-        thirds.sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf || a.team.localeCompare(b.team));
-        const best3 = thirds.slice(0, 8).map((t) => t.team);
-        return qualifiers.concat(best3);
-      }
-
-      function computeUserPredictedQualifiers(u) {
-        if (!u || !u.pred) return [];
-        const qualifiers = [];
-        const thirds = [];
-        for (const g of GK) {
-          const table = computeGroupStandings(u.pred, g);
-          if (table.length >= 2) {
-            qualifiers.push(table[0].team, table[1].team);
-            if (table[2]) thirds.push({ team: table[2].team, pts: table[2].pts, gd: table[2].gd, gf: table[2].gf });
-          }
-        }
-        thirds.sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf || a.team.localeCompare(b.team));
-        const best3 = thirds.slice(0, 8).map((t) => t.team);
-        return qualifiers.concat(best3);
       }
       function getLB() {
         return Object.values(users)
@@ -3359,20 +3304,13 @@
           const pr = (u.pred && u.pred[m.id]) || {},
             hv = pr.h !== undefined ? pr.h : "",
             av = pr.a !== undefined ? pr.a : "";
-          // compute points for this match if real result exists
-          const real = rr[m.id];
-          const mp = ptsForMatch(real, pr);
-          const mpColor = mp === 3 ? 'var(--red)' : mp === 1 ? 'var(--lime)' : 'var(--dim)';
-          const mpText = `+${mp}`;
           html += `<div class="mrow ${lk ? "lk" : ""}"><div class="mt"><span class="mfl">${m.hf}</span>${m.h}</div>
       <input type="number" class="si" min="0" max="20" value="${hv}" placeholder="–" ${!can ? "disabled" : ""}
         oninput="savePred('${m.id}','h',this.value)" id="i_${m.id}_h">
       <div class="vsep">-</div>
       <input type="number" class="si" min="0" max="20" value="${av}" placeholder="–" ${!can ? "disabled" : ""}
         oninput="savePred('${m.id}','a',this.value)" id="i_${m.id}_a">
-      <div class="mt r"><span class="mfl">${m.af}</span>${m.a}</div>
-      <div style="display:flex;align-items:center;margin-left:8px"> <div class=\"lnote\" style=\"margin-left:12px;color:${mpColor};font-weight:800;\">${mpText}</div></div>
-      </div>`;
+      <div class="mt r"><span class="mfl">${m.af}</span>${m.a}</div></div>`;
         });
         const gi = GK.indexOf(g),
           prev = gi > 0 ? GK[gi - 1] : null,
@@ -3733,20 +3671,17 @@
       // MODALS / PAGES / TICK
       // ═══════════════════════════════════════
       function openModal(t) {
-        // block register modal after deadline
-        if (t === "register" && isDLP()) {
-          alert("Ya pasó el tiempo para anotarse.");
-          return;
-        }
         $("mbg").classList.add("open");
         $("mLogin").classList.toggle("hidden", t !== "login");
         $("mReg").classList.toggle("hidden", t !== "register");
         $("mForgot").classList.toggle("hidden", t !== "forgot");
+        $("mNotice").classList.toggle("hidden", t !== "notice");
       }
       function swModal(t) {
         $("mLogin").classList.toggle("hidden", t !== "login");
         $("mReg").classList.toggle("hidden", t !== "register");
         $("mForgot").classList.toggle("hidden", t !== "forgot");
+        $("mNotice").classList.toggle("hidden", t !== "notice");
         if (t === "forgot") {
           $("fpEmail").value = "";
           clrErr("fpErr");
@@ -3822,5 +3757,4 @@
     </script>
   </body>
 </html>
-
 
