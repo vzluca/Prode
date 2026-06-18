@@ -1754,6 +1754,45 @@
         font-weight: 500;
         line-height: 1.6;
       }
+
+      /* ── CLASIFICADOS PAGE ── */
+      .clasi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 14px;
+        margin-bottom: 8px;
+      }
+      .clasi-card {
+        background: var(--glass);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-radius: 12px;
+        padding: 14px;
+      }
+      .clasi-grp-title {
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 0.95rem;
+        letter-spacing: 3px;
+        color: var(--white);
+        margin-bottom: 8px;
+      }
+      .clasi-empty {
+        font-size: 0.68rem;
+        color: var(--dim);
+        padding: 10px 0;
+        text-align: center;
+      }
+      .thirds-divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(251,191,36,0.2), transparent);
+        margin: 20px 0;
+      }
+      @media (max-width: 600px) {
+        .clasi-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+      }
+      @media (max-width: 420px) {
+        .clasi-grid { grid-template-columns: 1fr; }
+      }
     </style>
   </head>
   <body>
@@ -1779,6 +1818,9 @@
         </button>
         <button class="ntab" onclick="showPage('posiciones', this)">
           Posiciones
+        </button>
+        <button class="ntab" onclick="showPage('clasificados', this)">
+          Clasificados
         </button>
       </div>
       <div class="nright" id="nright">
@@ -2039,6 +2081,11 @@
             style="padding: 0; overflow: hidden; border-radius: 14px"
             id="fullLb"
           ></div>
+        </div>
+
+        <!-- CLASIFICADOS -->
+        <div class="spage" id="pageClasificados">
+          <div id="clasiContent"></div>
         </div>
       </div>
 
@@ -3397,10 +3444,10 @@
               continue;
             }
           }
-          // 1pt: correct qualifier
+          // 2pt: correct qualifier
           const realWinner =
             actualWinner || (rh > ra ? res.hn : ra > rh ? res.an : null);
-          if (realWinner && pName === realWinner) p += 1;
+          if (realWinner && pName === realWinner) p += 2;
         }
         return p;
       }
@@ -3486,6 +3533,108 @@
           <div class="grp-st-note">✓ Clasifican 1° y 2° directamente · el 3° disputa el repechaje de mejores terceros (pasan los 8 mejores de los 12 grupos)</div>
         </div>`;
       }
+      function renderClasificados() {
+        const page = $("clasiContent");
+        if (!page) return;
+        if (!cu || cu.isAdmin) {
+          page.innerHTML = `<div style="padding:60px 0;text-align:center"><div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(2.5rem,7vw,5rem);line-height:0.9;margin-bottom:14px">CLASIFI<br><span style="color:var(--lime)">CADOS</span></div><p style="color:var(--dim);font-size:0.82rem;margin-bottom:20px">Ingresá para ver tu tabla proyectada de clasificados.</p><button class="btn-hero" onclick="openModal('login')">Ingresar</button></div>`;
+          return;
+        }
+        // Compute standings for all groups
+        const thirds = [];
+        let groupsHtml = '<div class="clasi-grid">';
+        GK.forEach(g => {
+          const st = calcGroupStandings(g);
+          let inner = '';
+          if (!st) {
+            inner = `<div class="clasi-empty">Sin pronósticos aún</div>`;
+          } else {
+            if (st.length >= 3) {
+              thirds.push({ ...st[2], grp: g });
+            }
+            inner = `<div class="grp-st-head"><span></span><span>Equipo</span><span>Pts</span><span>PJ</span><span>DG</span><span>GF</span></div>`;
+            inner += st.map((t, i) => {
+              const gd = t.gf - t.gc;
+              const gdStr = gd > 0 ? `+${gd}` : `${gd}`;
+              const isQ = i < 2, isT = i === 2;
+              const posColor = isQ ? 'var(--lime)' : isT ? '#fbbf24' : 'var(--dim)';
+              const gdColor = gd > 0 ? 'var(--lime)' : gd < 0 ? '#f87171' : 'var(--dim)';
+              const badge = isQ
+                ? `<span class="grp-st-badge q">16vos</span>`
+                : isT
+                ? `<span class="grp-st-badge t">3°</span>`
+                : '';
+              return `<div class="grp-st-row${isQ ? ' qualify' : isT ? ' third' : ''}">
+                <div class="grp-st-pos" style="color:${posColor}">${i + 1}</div>
+                <div class="grp-st-team"><span class="grp-st-flag">${t.f}</span><span class="grp-st-name">${t.n}</span>${badge}</div>
+                <div class="grp-st-pts">${t.pts}</div>
+                <div class="grp-st-num">${t.pj}</div>
+                <div class="grp-st-num" style="color:${gdColor}">${gdStr}</div>
+                <div class="grp-st-num">${t.gf}</div>
+              </div>`;
+            }).join('');
+          }
+          groupsHtml += `<div class="clasi-card"><div class="clasi-grp-title">GRUPO ${g}</div>${inner}</div>`;
+        });
+        groupsHtml += '</div>';
+
+        // Sort thirds: pts → gd → gf
+        thirds.sort((a, b) => {
+          if (b.pts !== a.pts) return b.pts - a.pts;
+          const gdA = a.gf - a.gc, gdB = b.gf - b.gc;
+          if (gdB !== gdA) return gdB - gdA;
+          return b.gf - a.gf;
+        });
+
+        let thirdsHtml = '';
+        if (thirds.length > 0) {
+          const thirdsRows = thirds.map((t, i) => {
+            const gd = t.gf - t.gc;
+            const gdStr = gd > 0 ? `+${gd}` : `${gd}`;
+            const qualify = i < 8;
+            const posColor = qualify ? '#fbbf24' : 'var(--dim)';
+            const gdColor = gd > 0 ? 'var(--lime)' : gd < 0 ? '#f87171' : 'var(--dim)';
+            const badge = qualify
+              ? `<span class="grp-st-badge q">Clasifica</span>`
+              : `<span class="grp-st-badge e">Eliminado</span>`;
+            return `<div class="grp-st-row${qualify ? ' third' : ''}">
+              <div class="grp-st-pos" style="color:${posColor}">${i + 1}</div>
+              <div class="grp-st-team">
+                <span class="grp-st-flag">${t.f}</span>
+                <span class="grp-st-name">${t.n}</span>
+                <span style="font-size:0.46rem;color:var(--dim);margin-left:2px;font-weight:800;letter-spacing:1px">GRP ${t.grp}</span>
+                ${badge}
+              </div>
+              <div class="grp-st-pts">${t.pts}</div>
+              <div class="grp-st-num">${t.pj}</div>
+              <div class="grp-st-num" style="color:${gdColor}">${gdStr}</div>
+              <div class="grp-st-num">${t.gf}</div>
+            </div>`;
+          }).join('');
+          thirdsHtml = `<div class="thirds-divider"></div>
+          <div class="card">
+            <div class="sh" style="margin-bottom:10px">
+              <div class="sh-dot" style="background:#fbbf24"></div>
+              <span class="sh-title">Mejores Terceros</span>
+              <span class="sh-right">${thirds.length}/12 grupos con datos</span>
+            </div>
+            <p style="font-size:0.68rem;color:var(--dim);margin-bottom:12px;line-height:1.8;font-weight:400">Los <strong style="color:#fbbf24">8 mejores terceros</strong> de los 12 grupos clasifican a los 16avos. Se ordenan por Pts → DG → GF.</p>
+            <div class="grp-st-head"><span></span><span>Equipo</span><span>Pts</span><span>PJ</span><span>DG</span><span>GF</span></div>
+            ${thirdsRows}
+            <div class="grp-st-note">✓ Pasan los primeros 8 de esta tabla · Los grupos sin pronósticos no están incluidos</div>
+          </div>`;
+        } else {
+          thirdsHtml = `<div class="thirds-divider"></div><div style="text-align:center;padding:20px 0;font-size:0.72rem;color:var(--dim)">Cargá pronósticos en más grupos para ver los mejores terceros.</div>`;
+        }
+
+        page.innerHTML = `<div class="sh" style="margin-bottom:18px">
+          <div class="sh-dot g"></div>
+          <span class="sh-title">Clasificados Proyectados</span>
+          <span class="sh-right">Según tus pronósticos</span>
+        </div>
+        ${groupsHtml}
+        ${thirdsHtml}`;
+      }
       function getLB() {
         return Object.values(users)
           .map((u) => ({ nick: u.nick, pts: calcPts(u), inF: u.inFinal }))
@@ -3498,7 +3647,8 @@
         $("potTotal").textContent = fmt(pot);
         $("hCount").textContent = n;
         $("potPl").textContent = n;
-        $("potFin").textContent = fn;
+        if ($("sGrupos2")) $("sGrupos2").textContent = fmt(n * FG);
+        if ($("sFinal2")) $("sFinal2").textContent = fmt(fn * FF);
         $("potBreak").textContent =
           `${n} × $${FG.toLocaleString()} + ${fn} × $${FF.toLocaleString()} fase final`;
         $("sPot").textContent = fmt(pot);
@@ -3992,9 +4142,10 @@
         const ts = $("topSection");
         if (ts)
           ts.style.display =
-            p === "eliminacion" || p === "posiciones" || cu ? "none" : "";
+            p === "eliminacion" || p === "posiciones" || p === "clasificados" || cu ? "none" : "";
         if (p === "eliminacion") renderBracket();
         if (p === "posiciones") renderLB();
+        if (p === "clasificados") renderClasificados();
         if (p === "encuesta" && cu && !cu.isAdmin) renderSurvey();
       }
       function tick() {
@@ -4035,6 +4186,7 @@
       window.saveAdminBracket = saveAdminBracket;
       window.checkBrDraw = checkBrDraw;
       window.setBrWinner = setBrWinner;
+      window.renderClasificados = renderClasificados;
 
       tick();
       setInterval(tick, 30000);
