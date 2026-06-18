@@ -193,6 +193,30 @@
         border-radius: 100px;
         transition: all 0.2s;
       }
+      .btn-outline {
+        background: none;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: var(--off);
+        font-family: "Figtree", sans-serif;
+        font-weight: 600;
+        font-size: 0.68rem;
+        letter-spacing: 1px;
+        padding: 6px 14px;
+        cursor: pointer;
+        border-radius: 100px;
+      }
+      .btn-solid {
+        background: var(--red);
+        border: none;
+        color: var(--white);
+        font-family: "Figtree", sans-serif;
+        font-weight: 800;
+        font-size: 0.68rem;
+        letter-spacing: 1px;
+        padding: 6px 14px;
+        cursor: pointer;
+        border-radius: 100px;
+      }
       .btn-ghost:hover {
         border-color: rgba(255, 255, 255, 0.3);
         color: var(--white);
@@ -1509,6 +1533,36 @@
         .fl-big {
           font-size: 5rem;
         }
+      }
+      @media (max-width: 480px) {
+        .mrow {
+          display: flex;
+          flex-direction: column;
+          align-items: stretch;
+          gap: 6px;
+          padding: 6px 0;
+        }
+        .mrow .mt,
+        .mrow .mt.r {
+          display: flex;
+          justify-content: space-between;
+          width: 100%;
+        }
+        .vsep { display: none; }
+        .mrow .si {
+          width: 68px;
+          height: 44px;
+          font-size: 1.1rem;
+          margin: 0 auto;
+        }
+        .gact { flex-direction: column; gap: 8px; }
+        .bsave { width: 100%; }
+        .br-round { min-width: 110px; }
+        nav { padding: 0 3vw; }
+        .ntabs { gap: 6px; }
+        .hero { padding: 36px 4vw 28px; }
+        .aside { order: 99; width: 100%; }
+        .wrap { grid-template-columns: 1fr; padding: 0 4vw; }
       }
     </style>
   </head>
@@ -3768,3 +3822,5 @@
     </script>
   </body>
 </html>
+
+
