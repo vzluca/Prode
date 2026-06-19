@@ -1090,6 +1090,39 @@
         color: var(--lime);
         flex-shrink: 0;
       }
+      .br-score-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        padding: 4px 8px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        background: rgba(255, 255, 255, 0.02);
+      }
+      .br-si {
+        width: 26px;
+        height: 22px;
+        background: rgba(255, 255, 255, 0.07);
+        border: none;
+        color: var(--white);
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 0.88rem;
+        text-align: center;
+        border-radius: 5px;
+        outline: none;
+        -moz-appearance: textfield;
+      }
+      .br-si::-webkit-outer-spin-button,
+      .br-si::-webkit-inner-spin-button { -webkit-appearance: none; }
+      .br-si:focus { background: rgba(232, 53, 42, 0.2); }
+      .br-vs { font-size: 0.56rem; color: var(--dim); font-weight: 700; }
+      .br-score-saved {
+        font-size: 0.72rem;
+        color: var(--lime);
+        font-weight: 700;
+        font-family: "Bebas Neue", sans-serif;
+        letter-spacing: 1px;
+      }
 
       /* ── ASIDE ── */
       .aside {
@@ -2189,6 +2222,27 @@
               border-top: 1px solid rgba(255, 255, 255, 0.05);
             "
           >
+            <div class="admin-h">Equipos 16avos de Final</div>
+            <p
+              style="
+                font-size: 0.62rem;
+                color: var(--dim);
+                margin-bottom: 8px;
+                font-weight: 400;
+              "
+            >
+              Cargá los 32 clasificados (16 partidos). Se muestran en el bracket de todos.
+            </p>
+            <div id="aSlots"></div>
+            <button class="bsr" onclick="saveAdminSlots()">Guardar llaves</button>
+          </div>
+          <div
+            style="
+              margin-top: 14px;
+              padding-top: 12px;
+              border-top: 1px solid rgba(255, 255, 255, 0.05);
+            "
+          >
             <div class="admin-h">Ventana fase final</div>
             <p
               style="
@@ -3138,6 +3192,7 @@
         rr = {},
         rb = {},
         brr = {},
+        brSlots = {},
         afForce = null;
       let cu = null,
         cg = "A";
@@ -3199,6 +3254,7 @@
             rr = d.rr || {};
             rb = d.rb || {};
             brr = d.brr || {};
+            brSlots = d.brSlots || {};
             afForce = d.afForce !== undefined ? d.afForce : null;
           }
           // live listeners
@@ -3226,6 +3282,9 @@
           onValue(ref(db, "afForce"), (s) => {
             afForce = s.val();
             updateFinStatus();
+          });
+          onValue(ref(db, "brSlots"), (s) => {
+            brSlots = s.val() || {};
           });
         } catch (e) {
           console.error("Firebase init error", e);
@@ -3353,7 +3412,7 @@
         const bg = cu.isAdmin ? "#5a3fd4" : AVCOLS[0];
         nr.innerHTML = `<div class="upill"><div class="uav" style="background:${bg};color:#fff">${ini}</div><span class="upill-nick">${cu.nick}</span>${cu.isAdmin ? "<span class='badge-admin'>ADMIN</span>" : ""}</div><button class="btn-signout" onclick="doLogout()">Salir</button>`;
         $("adminC").classList.toggle("hidden", !cu.isAdmin);
-        if (cu.isAdmin) renderAdminGrpSel();
+        if (cu.isAdmin) { renderAdminGrpSel(); renderAdminSlots(); }
         updateFinStatus();
       }
       function updateFinStatus() {
@@ -3838,6 +3897,7 @@
       function renderBrRounds() {
         const isA = cu && cu.isAdmin,
           bd = isA ? rb : (cu && cu.bracket) || {},
+          bs = (cu && !isA && cu.bracketScores) || {},
           lk = cu && !isA && cu.bLocked,
           open = isBrOpen();
         $("bRounds").innerHTML = ROUNDS.map((round) => {
@@ -3847,15 +3907,27 @@
               pick = isA ? rb[sid] : bd[sid];
             const teams = getBrTeams(round.id, i, bd);
             const canP = !lk && open && !isA;
-            if (teams.length < 2) {
+            const hasTeams = teams.length >= 2 && (teams[0].n !== "?" || teams[1].n !== "?");
+            if (!hasTeams) {
               mh += `<div class="br-match"><div class="br-tbd">🏳 <span class="br-nm">Por definir</span></div><div class="br-tbd">🏳 <span class="br-nm">Por definir</span></div></div>`;
             } else {
-              mh += `<div class="br-match">${teams
+              const sc = bs[sid] || {};
+              let scoreHtml = "";
+              if (canP) {
+                scoreHtml = `<div class="br-score-row">
+                  <input type="number" class="br-si" min="0" max="20" value="${sc.h !== undefined && sc.h !== null ? sc.h : ""}" placeholder="–" oninput="saveBrScore('${sid}','h',this.value)">
+                  <span class="br-vs">-</span>
+                  <input type="number" class="br-si" min="0" max="20" value="${sc.a !== undefined && sc.a !== null ? sc.a : ""}" placeholder="–" oninput="saveBrScore('${sid}','a',this.value)">
+                </div>`;
+              } else if (!isA && sc.h !== undefined && sc.h !== null && sc.a !== undefined && sc.a !== null) {
+                scoreHtml = `<div class="br-score-row"><span class="br-score-saved">${sc.h} - ${sc.a}</span></div>`;
+              }
+              mh += `<div class="br-match">${scoreHtml}${teams
                 .map((t) => {
                   const pn = pick && pick.split("|")[0] === t.n;
                   const cls = lk ? "lkp" : pn ? "sel" : "";
                   const oc = canP
-                    ? `onclick="pickBr('${sid}','${t.n.replace(/'/g, "\'")}','${t.f}')"`
+                    ? `onclick="pickBr('${sid}','${t.n.replace(/'/g, "\\'")}','${t.f}')"`
                     : "";
                   return `<div class="br-team ${cls}" ${oc}><span>${t.f}</span><span class="br-nm">${t.n}</span>${pn ? "<span class='br-ck'>✓</span>" : ""}</div>`;
                 })
@@ -3867,12 +3939,13 @@
       }
       function getBrTeams(rid, idx, bd) {
         if (rid === "R32") {
-          const a = R32S[idx * 2] || ["?", "🏳"],
-            b = R32S[idx * 2 + 1] || ["?", "🏳"];
-          return [
-            { n: a[0], f: a[1] },
-            { n: b[0], f: b[1] },
-          ];
+          function slot(i) {
+            const s = brSlots[i];
+            if (s && s.n) return { n: s.n, f: s.f || "🏳" };
+            const fb = R32S[i] || ["?", "🏳"];
+            return { n: fb[0], f: fb[1] };
+          }
+          return [slot(idx * 2), slot(idx * 2 + 1)];
         }
         const pr = PREV[rid];
         if (!pr) return [];
@@ -3903,6 +3976,15 @@
           else cu.bracket[k] = update2[k];
         });
         renderBrRounds();
+      }
+      async function saveBrScore(bid, side, val) {
+        if (!cu || cu.isAdmin || cu.bLocked) return;
+        const data = {};
+        data[side] = val === "" ? null : parseInt(val);
+        await fbUpdate(`users/${cu.nick}/bracketScores/${bid}`, data);
+        if (!cu.bracketScores) cu.bracketScores = {};
+        if (!cu.bracketScores[bid]) cu.bracketScores[bid] = {};
+        cu.bracketScores[bid][side] = data[side];
       }
       function clearDnKeys(path, s, obj) {
         const rO = ["R32", "R16", "QF", "SF", "F"];
@@ -4068,6 +4150,46 @@
         alert(`✅ ${sv} resultado(s) de ${round} guardados.`);
       }
 
+      function renderAdminSlots() {
+        const el = $("aSlots");
+        if (!el) return;
+        const allTeams = [];
+        GK.forEach(g => GRP[g].t.forEach(t => allTeams.push(t)));
+        allTeams.sort((a, b) => a.n.localeCompare(b.n));
+        const opts = '<option value="">— Seleccioná —</option>' +
+          allTeams.map(t => `<option value="${t.n}">${t.f} ${t.n}</option>`).join('');
+        let html = '';
+        for (let i = 0; i < 16; i++) {
+          html += `<div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:7px 8px;margin-bottom:4px">
+            <div style="font-size:0.5rem;color:var(--dim);letter-spacing:1.5px;font-weight:800;margin-bottom:4px">PARTIDO ${i + 1}</div>
+            <select class="fi" id="asl_${i*2}" style="border-radius:8px;font-size:0.7rem;margin-bottom:3px">${opts}</select>
+            <select class="fi" id="asl_${i*2+1}" style="border-radius:8px;font-size:0.7rem">${opts}</select>
+          </div>`;
+        }
+        el.innerHTML = html;
+        for (let i = 0; i < 32; i++) {
+          const sel = $(`asl_${i}`);
+          if (sel && brSlots[i]) sel.value = brSlots[i].n || '';
+        }
+      }
+      async function saveAdminSlots() {
+        const allTeams = [];
+        GK.forEach(g => GRP[g].t.forEach(t => allTeams.push(t)));
+        const teamMap = {};
+        allTeams.forEach(t => { teamMap[t.n] = t.f; });
+        const updates = {};
+        let cnt = 0;
+        for (let i = 0; i < 32; i++) {
+          const sel = $(`asl_${i}`);
+          if (sel && sel.value) {
+            updates[i] = { n: sel.value, f: teamMap[sel.value] || "🏳" };
+            cnt++;
+          }
+        }
+        await fbSet("brSlots", updates);
+        brSlots = { ...updates };
+        alert(`✅ ${cnt} equipos guardados en las llaves.`);
+      }
       async function adminToggleFinal() {
         const nv = afForce === null ? true : afForce === true ? false : null;
         await fbSet("afForce", nv);
@@ -4163,6 +4285,8 @@
       window.checkBrDraw = checkBrDraw;
       window.setBrWinner = setBrWinner;
       window.renderClasificados = renderClasificados;
+      window.saveBrScore = saveBrScore;
+      window.saveAdminSlots = saveAdminSlots;
 
       tick();
       setInterval(tick, 30000);
