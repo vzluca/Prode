@@ -3954,9 +3954,9 @@
             const w = res.winner || '';
             const t1s = t1.n.replace(/'/g, "\\'"), t2s = t2.n.replace(/'/g, "\\'");
             return `<div class="bkm-score-row">
-              <input type="number" class="bkm-si" min="0" max="20" value="${hv}" placeholder="–" id="abr_${sid}_h" oninput="adminBrScore('${sid}','${t1s}','${t1.f}','${t2s}','${t2.f}')">
+              <input type="number" class="bkm-si" min="0" max="20" value="${hv}" placeholder="–" id="abr_${sid}_h" oninput="adminBrScoreInput('${sid}')" onblur="adminBrScore('${sid}','${t1s}','${t1.f}','${t2s}','${t2.f}')">
               <span class="bkm-vs">-</span>
-              <input type="number" class="bkm-si" min="0" max="20" value="${av}" placeholder="–" id="abr_${sid}_a" oninput="adminBrScore('${sid}','${t1s}','${t1.f}','${t2s}','${t2.f}')">
+              <input type="number" class="bkm-si" min="0" max="20" value="${av}" placeholder="–" id="abr_${sid}_a" oninput="adminBrScoreInput('${sid}')" onblur="adminBrScore('${sid}','${t1s}','${t1.f}','${t2s}','${t2.f}')">
             </div>
             <div id="abr_${sid}_dw" class="bkm-draw-row" style="${isDraw ? '' : 'display:none'}">
               <span class="bkm-dw-lbl">ET/Pen:</span>
@@ -4026,15 +4026,17 @@
 
       async function adminPickBr(sid, name, flag) {
         if (!cu || !cu.isAdmin) return;
-        const val = `${name}|${flag}`;
-        const upd = { [sid]: val };
+        // toggle: if already this winner, click again to clear
+        const alreadySet = rb[sid] && rb[sid].split('|')[0] === name;
+        const upd = { [sid]: alreadySet ? null : `${name}|${flag}` };
         clearDnKeys('rb', sid, upd);
         await fbUpdate('rb', upd);
         Object.keys(upd).forEach(k => { if (upd[k] === null) delete rb[k]; else rb[k] = upd[k]; });
         if (!brr[sid]) brr[sid] = {};
-        brr[sid].winner = name;
-        const brrUpd = {}; brrUpd[sid] = { ...brr[sid] };
+        if (alreadySet) delete brr[sid].winner; else brr[sid].winner = name;
+        const brrUpd = {}; brrUpd[sid] = Object.keys(brr[sid]).length ? { ...brr[sid] } : null;
         await fbUpdate('brr', brrUpd);
+        if (!brr[sid] || !Object.keys(brr[sid]).length) delete brr[sid];
         updateStats();
         renderBrRounds();
       }
@@ -4053,7 +4055,22 @@
         renderBrRounds();
       }
 
+      function adminBrScoreInput(sid) {
+        // oninput: only update draw row visibility, no re-render
+        const h = $(`abr_${sid}_h`), a = $(`abr_${sid}_a`);
+        if (!h || !a) return;
+        const hv = h.value === '' ? null : +h.value;
+        const av = a.value === '' ? null : +a.value;
+        const dw = $(`abr_${sid}_dw`);
+        if (dw) dw.style.display = (hv !== null && av !== null && hv === av) ? '' : 'none';
+        // update local brr immediately so save captures latest typed values
+        if (!brr[sid]) brr[sid] = {};
+        if (hv !== null) brr[sid].h = hv; else delete brr[sid].h;
+        if (av !== null) brr[sid].a = av; else delete brr[sid].a;
+      }
+
       function adminBrScore(sid, t1n, t1f, t2n, t2f) {
+        // onblur: derive winner, update rb, re-render to advance team
         if (!cu || !cu.isAdmin) return;
         const h = $(`abr_${sid}_h`), a = $(`abr_${sid}_a`);
         if (!h || !a) return;
@@ -4064,21 +4081,22 @@
         if (hv !== null) entry.h = hv; else delete entry.h;
         if (av !== null) entry.a = av; else delete entry.a;
         if (t1n && t1n !== '?') { entry.hn = t1n; entry.an = t2n; }
-        // auto-detect winner from score (local only, no Firebase)
+        let didAdvance = false;
         if (hv !== null && av !== null && hv !== av) {
           const winner = hv > av ? { n: t1n, f: t1f } : { n: t2n, f: t2f };
           if (winner.n && winner.n !== '?') {
             entry.winner = winner.n;
-            rb[sid] = `${winner.n}|${winner.f}`;
-            const upd = { [sid]: rb[sid] };
+            const upd = { [sid]: `${winner.n}|${winner.f}` };
             clearDnKeys('rb', sid, upd);
             Object.keys(upd).forEach(k => { if (upd[k] === null) delete rb[k]; else rb[k] = upd[k]; });
+            didAdvance = true;
           }
+        } else if (hv !== null && av !== null && hv === av) {
+          // draw: clear auto-winner so admin can pick manually via ET/Pen buttons
+          delete entry.winner;
         }
         brr[sid] = entry;
-        // show/hide draw selector row
-        const dw = $(`abr_${sid}_dw`);
-        if (dw) dw.style.display = (hv !== null && av !== null && hv === av) ? '' : 'none';
+        if (didAdvance) renderBrRounds();
       }
 
       async function saveAllBrScores() {
@@ -4089,13 +4107,28 @@
           ROUNDS.forEach(round => {
             for (let i = 0; i < round.c; i++) {
               const sid = `${round.id}_${i}`;
-              if (brr[sid]) brrUpd[sid] = brr[sid];
+              const entry = brr[sid];
+              if (!entry) return;
+              // derive winner from score if not set and score is clear
+              if (!entry.winner && entry.h !== undefined && entry.a !== undefined && +entry.h !== +entry.a) {
+                const teams = getBrTeams(round.id, i, rb);
+                const t1 = teams[0], t2 = teams[1];
+                if (t1 && t2 && t1.n !== '?' && t2.n !== '?') {
+                  const winner = +entry.h > +entry.a ? t1 : t2;
+                  entry.winner = winner.n;
+                  const upd = { [sid]: `${winner.n}|${winner.f}` };
+                  clearDnKeys('rb', sid, upd);
+                  Object.keys(upd).forEach(k => { if (upd[k] === null) delete rb[k]; else rb[k] = upd[k]; });
+                }
+              }
+              brrUpd[sid] = entry;
               if (rb[sid]) rbUpd[sid] = rb[sid];
             }
           });
           if (Object.keys(brrUpd).length) await fbUpdate('brr', brrUpd);
           if (Object.keys(rbUpd).length) await fbUpdate('rb', rbUpd);
           updateStats();
+          renderBrRounds();
           if (btn) { btn.textContent = "✅ Guardado!"; setTimeout(() => { if (btn) { btn.disabled = false; btn.textContent = "Guardar Fase Eliminatoria"; } }, 2000); }
         } catch(e) {
           if (btn) { btn.disabled = false; btn.textContent = "Guardar Fase Eliminatoria"; }
@@ -4642,6 +4675,7 @@
       window.saveAdminSlots = saveAdminSlots;
       window.adminPickBr = adminPickBr;
       window.adminSlotChange = adminSlotChange;
+      window.adminBrScoreInput = adminBrScoreInput;
       window.adminBrScore = adminBrScore;
       window.saveAllBrScores = saveAllBrScores;
 
