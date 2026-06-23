@@ -2185,64 +2185,6 @@
               border-top: 1px solid rgba(255, 255, 255, 0.05);
             "
           >
-            <div class="admin-h">Resultados fase eliminatoria</div>
-            <p
-              style="
-                font-size: 0.62rem;
-                color: var(--dim);
-                margin-bottom: 8px;
-                font-weight: 400;
-              "
-            >
-              Cargá el resultado de cada llave. Si hay empate, indicá quién
-              pasó.
-            </p>
-            <select
-              class="fi"
-              id="aBrRound"
-              style="margin-bottom: 8px; border-radius: 10px"
-              onchange="renderAdminBracket()"
-            >
-              <option value="">— Seleccioná ronda —</option>
-              <option value="R32">16avos de Final</option>
-              <option value="R16">Octavos de Final</option>
-              <option value="QF">Cuartos de Final</option>
-              <option value="SF">Semifinales</option>
-              <option value="F">Final</option>
-            </select>
-            <div id="aBracketMatches"></div>
-            <button class="bsr" onclick="saveAdminBracket()">
-              Guardar resultados ronda
-            </button>
-          </div>
-          <div
-            style="
-              margin-top: 14px;
-              padding-top: 12px;
-              border-top: 1px solid rgba(255, 255, 255, 0.05);
-            "
-          >
-            <div class="admin-h">Equipos 16avos de Final</div>
-            <p
-              style="
-                font-size: 0.62rem;
-                color: var(--dim);
-                margin-bottom: 8px;
-                font-weight: 400;
-              "
-            >
-              Cargá los 32 clasificados (16 partidos). Se muestran en el bracket de todos.
-            </p>
-            <div id="aSlots"></div>
-            <button class="bsr" onclick="saveAdminSlots()">Guardar llaves</button>
-          </div>
-          <div
-            style="
-              margin-top: 14px;
-              padding-top: 12px;
-              border-top: 1px solid rgba(255, 255, 255, 0.05);
-            "
-          >
             <div class="admin-h">Ventana fase final</div>
             <p
               style="
@@ -2369,6 +2311,26 @@
         <div class="fsw" style="margin-top:12px">
           ¿Ya tenés cuenta? <a onclick="swModal('login')">Ingresá</a>
         </div>
+      </div>
+      <div class="modal hidden" id="mPromoFinal">
+        <button class="mx" onclick="closeModal()">×</button>
+        <div style="text-align:center;margin-bottom:10px">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:2.8rem;line-height:0.9;background:linear-gradient(135deg,var(--red) 0%,#6fa8f5 50%,var(--lime) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">FASE<br>FINAL</div>
+        </div>
+        <div class="modal-t" style="font-size:1.05rem;letter-spacing:2px;text-align:center;margin-bottom:6px">¡El torneo continúa!</div>
+        <div class="modal-s" style="font-size:0.76rem;line-height:1.9;color:var(--off)">
+          Viene la <strong style="color:var(--white)">fase eliminatoria</strong> y podés seguir participando.<br>
+          Son <strong style="color:var(--lime)">$1.000</strong> más al pozo. Tenés tiempo para anotarte:
+        </div>
+        <div style="background:rgba(0,168,107,0.06);border-radius:12px;padding:12px 14px;margin-bottom:14px">
+          <div style="font-size:0.54rem;font-weight:800;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:4px">Ventana de inscripción</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--lime);letter-spacing:2px">27 Jun 00:00 → 28 Jun 10:00 hs</div>
+        </div>
+        <div style="font-size:0.74rem;color:var(--off);line-height:2;margin-bottom:16px">
+          <div style="margin-bottom:3px">📍 Acercate al <strong style="color:var(--white)">Dto. Legajos</strong></div>
+          <div>💸 O transferí al alias: <strong style="color:var(--white);font-family:'Bebas Neue',sans-serif;font-size:0.95rem;letter-spacing:1px">luca.v.g</strong></div>
+        </div>
+        <button class="fsub" onclick="closeModal()" style="background:var(--lime);color:#000;font-weight:900">¡Entendido!</button>
       </div>
     </div>
 
@@ -3381,6 +3343,7 @@
         cu = u;
         closeModal();
         afterLogin();
+        if (!u.isAdmin && !u.inFinal) openModal('promoFinal');
       }
       function afterLogin() {
         updateNav();
@@ -3894,7 +3857,149 @@
           lm.classList.add("hidden");
         }
       }
+      function renderAdminBrRounds() {
+        const allTeams = [];
+        GK.forEach(g => GRP[g].t.forEach(t => allTeams.push(t)));
+        allTeams.sort((a, b) => a.n.localeCompare(b.n));
+        const teamByName = {};
+        allTeams.forEach(t => { teamByName[t.n] = t.f; });
+        const opts = '<option value="">— Seleccioná —</option>' +
+          allTeams.map(t => `<option value="${t.n}">${t.f} ${t.n}</option>`).join('');
+
+        $("bRounds").innerHTML = ROUNDS.map((round) => {
+          let mh = "";
+          for (let i = 0; i < round.c; i++) {
+            const sid = `${round.id}_${i}`;
+            const res = brr[sid] || {};
+            const isDrawn = res.h !== undefined && res.a !== undefined && +res.h === +res.a;
+            let teamHtml = "";
+            let t1name = "", t2name = "", t1flag = "🏳", t2flag = "🏳";
+            if (round.id === "R32") {
+              const s1 = brSlots[i * 2] || {}, s2 = brSlots[i * 2 + 1] || {};
+              t1name = s1.n || ""; t1flag = s1.f || "🏳";
+              t2name = s2.n || ""; t2flag = s2.f || "🏳";
+              teamHtml = `<div style="display:flex;gap:4px;margin-bottom:6px">
+                <select id="asl_${i*2}" style="flex:1;background:rgba(255,255,255,0.06);border:none;color:var(--white);font-family:'Figtree',sans-serif;font-size:0.6rem;padding:4px 6px;border-radius:7px;outline:none">${opts}</select>
+                <span style="color:var(--dim);font-size:0.68rem;align-self:center;flex-shrink:0">vs</span>
+                <select id="asl_${i*2+1}" style="flex:1;background:rgba(255,255,255,0.06);border:none;color:var(--white);font-family:'Figtree',sans-serif;font-size:0.6rem;padding:4px 6px;border-radius:7px;outline:none">${opts}</select>
+              </div>`;
+            } else {
+              const teams = getBrTeams(round.id, i, rb);
+              const tm1 = teams[0] || { n: "?", f: "🏳" };
+              const tm2 = teams[1] || { n: "?", f: "🏳" };
+              t1name = tm1.n; t1flag = tm1.f;
+              t2name = tm2.n; t2flag = tm2.f;
+              teamHtml = `<div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:0.68rem;font-weight:600;color:var(--off)">
+                <span>${t1flag} ${t1name}</span><span>${t2flag} ${t2name}</span>
+              </div>`;
+            }
+            const t1safe = t1name.replace(/'/g, "\\'"), t2safe = t2name.replace(/'/g, "\\'");
+            mh += `<div style="background:rgba(0,87,184,0.08);border-radius:8px;padding:8px 9px;margin-bottom:5px">
+              ${teamHtml}
+              <div style="display:flex;align-items:center;gap:6px;justify-content:center;margin-bottom:${isDrawn ? "6px" : "0"}">
+                <input type="number" class="ai" style="width:34px;height:28px" min="0" max="20" value="${res.h !== undefined ? res.h : ""}" placeholder="–" id="abr_${sid}_h" oninput="adminBrCheckDraw('${sid}','${t1safe}','${t1flag}','${t2safe}','${t2flag}')">
+                <span style="color:var(--dim);font-size:0.7rem">-</span>
+                <input type="number" class="ai" style="width:34px;height:28px" min="0" max="20" value="${res.a !== undefined ? res.a : ""}" placeholder="–" id="abr_${sid}_a" oninput="adminBrCheckDraw('${sid}','${t1safe}','${t1flag}','${t2safe}','${t2flag}')">
+              </div>
+              <div id="abr_${sid}_win" style="${isDrawn ? "" : "display:none"}">
+                <div style="font-size:0.52rem;color:#6fa8f5;margin-bottom:3px;font-weight:800;text-transform:uppercase;letter-spacing:1px">Empate — ¿Quién pasó?</div>
+                <div style="display:flex;gap:4px">
+                  <button id="abr_${sid}_w1" onclick="setAdminBrWinner('${sid}','${t1safe}','${t1flag}','${sid}_w1','${sid}_w2')" style="flex:1;padding:4px;border-radius:5px;border:none;font-size:0.6rem;font-weight:700;cursor:pointer;background:${res.winner === t1name ? "var(--lime)" : "rgba(255,255,255,0.08)"};color:${res.winner === t1name ? "#000" : "var(--off)"}">${t1flag} ${t1name || "?"}</button>
+                  <button id="abr_${sid}_w2" onclick="setAdminBrWinner('${sid}','${t2safe}','${t2flag}','${sid}_w2','${sid}_w1')" style="flex:1;padding:4px;border-radius:5px;border:none;font-size:0.6rem;font-weight:700;cursor:pointer;background:${res.winner === t2name ? "var(--lime)" : "rgba(255,255,255,0.08)"};color:${res.winner === t2name ? "#000" : "var(--off)"}">${t2flag} ${t2name || "?"}</button>
+                </div>
+              </div>
+            </div>`;
+          }
+          return `<div class="br-round">
+            <div class="br-label ${round.col}">${round.l}</div>
+            ${mh}
+            <button onclick="saveAdminRound('${round.id}')" style="width:100%;background:var(--purple);border:none;color:#fff;font-family:'Figtree',sans-serif;font-size:0.58rem;font-weight:800;padding:6px 4px;cursor:pointer;border-radius:8px;margin-top:5px;transition:opacity 0.2s;letter-spacing:0.5px">Guardar ${round.l}</button>
+          </div>`;
+        }).join("");
+
+        for (let i = 0; i < 32; i++) {
+          const sel = $(`asl_${i}`);
+          if (sel && brSlots[i] && brSlots[i].n) sel.value = brSlots[i].n;
+        }
+      }
+
+      function adminBrCheckDraw(sid, t1n, t1f, t2n, t2f) {
+        const h = $(`abr_${sid}_h`), a = $(`abr_${sid}_a`), win = $(`abr_${sid}_win`);
+        if (!h || !a || !win) return;
+        const isDraw = h.value !== "" && a.value !== "" && +h.value === +a.value;
+        win.style.display = isDraw ? "" : "none";
+        if (isDraw) {
+          const b1 = $(`abr_${sid}_w1`), b2 = $(`abr_${sid}_w2`);
+          if (b1) b1.textContent = `${t1f} ${t1n || "?"}`;
+          if (b2) b2.textContent = `${t2f} ${t2n || "?"}`;
+        }
+      }
+
+      function setAdminBrWinner(sid, name, flag, ownId, otherId) {
+        if (!brr[sid]) brr[sid] = {};
+        brr[sid].winner = name;
+        const own = $(`abr_${ownId}`), other = $(`abr_${otherId}`);
+        if (own) { own.style.background = "var(--lime)"; own.style.color = "#000"; }
+        if (other) { other.style.background = "rgba(255,255,255,0.08)"; other.style.color = "var(--off)"; }
+      }
+
+      async function saveAdminRound(roundId) {
+        const roundData = ROUNDS.find(r => r.id === roundId);
+        if (!roundData) return;
+        const allTeams = [];
+        GK.forEach(g => GRP[g].t.forEach(t => allTeams.push(t)));
+        const teamByName = {};
+        allTeams.forEach(t => { teamByName[t.n] = t.f; });
+
+        if (roundId === "R32") {
+          const slotUpdates = {};
+          for (let i = 0; i < 32; i++) {
+            const sel = $(`asl_${i}`);
+            if (sel && sel.value) slotUpdates[i] = { n: sel.value, f: teamByName[sel.value] || "🏳" };
+          }
+          await fbSet("brSlots", slotUpdates);
+          brSlots = { ...slotUpdates };
+        }
+
+        const updates = {};
+        let sv = 0;
+        for (let i = 0; i < roundData.c; i++) {
+          const bid = `${roundId}_${i}`;
+          const h = $(`abr_${bid}_h`), a = $(`abr_${bid}_a`);
+          if (!h || !a || h.value === "" || a.value === "") continue;
+          const hv = +h.value, av = +a.value;
+          let t1, t2;
+          if (roundId === "R32") {
+            t1 = brSlots[i * 2] || { n: "?", f: "🏳" };
+            t2 = brSlots[i * 2 + 1] || { n: "?", f: "🏳" };
+          } else {
+            const teams = getBrTeams(roundId, i, rb);
+            t1 = teams[0] || { n: "?", f: "🏳" };
+            t2 = teams[1] || { n: "?", f: "🏳" };
+          }
+          let winner;
+          if (hv > av) winner = t1.n;
+          else if (av > hv) winner = t2.n;
+          else {
+            winner = brr[bid] && brr[bid].winner;
+            if (!winner) { alert(`Partido ${i + 1} de ${roundId} empata — indicá el ganador primero.`); return; }
+          }
+          updates[bid] = { h: hv, a: av, hn: t1.n, an: t2.n, winner };
+          rb[bid] = `${winner}|${winner === t1.n ? t1.f : t2.f}`;
+          sv++;
+        }
+        if (sv > 0) {
+          await fbUpdate("brr", updates);
+          await fbUpdate("rb", Object.fromEntries(Object.entries(rb)));
+          Object.assign(brr, updates);
+          updateStats();
+        }
+        alert(`✅ ${roundId}${sv > 0 ? `: ${sv} resultado(s) guardados` : " — sin resultados"}${roundId === "R32" ? " + llaves actualizadas" : ""}.`);
+        renderAdminBrRounds();
+      }
+
       function renderBrRounds() {
+        if (cu && cu.isAdmin) { renderAdminBrRounds(); return; }
         const isA = cu && cu.isAdmin,
           bd = isA ? rb : (cu && cu.bracket) || {},
           bs = (cu && !isA && cu.bracketScores) || {},
@@ -4212,6 +4317,7 @@
         $("mForgot").classList.toggle("hidden", t !== "forgot");
         $("mNotice").classList.toggle("hidden", t !== "notice");
         $("mClosed").classList.toggle("hidden", t !== "closed");
+        $("mPromoFinal").classList.toggle("hidden", t !== "promoFinal");
       }
       function swModal(t) {
         if (t === "register") t = "closed";
@@ -4220,6 +4326,7 @@
         $("mForgot").classList.toggle("hidden", t !== "forgot");
         $("mNotice").classList.toggle("hidden", t !== "notice");
         $("mClosed").classList.toggle("hidden", t !== "closed");
+        $("mPromoFinal").classList.toggle("hidden", t !== "promoFinal");
         if (t === "forgot") {
           $("fpEmail").value = "";
           clrErr("fpErr");
@@ -4287,6 +4394,10 @@
       window.renderClasificados = renderClasificados;
       window.saveBrScore = saveBrScore;
       window.saveAdminSlots = saveAdminSlots;
+      window.renderAdminBrRounds = renderAdminBrRounds;
+      window.adminBrCheckDraw = adminBrCheckDraw;
+      window.setAdminBrWinner = setAdminBrWinner;
+      window.saveAdminRound = saveAdminRound;
 
       tick();
       setInterval(tick, 30000);
@@ -4294,4 +4405,3 @@
     </script>
   </body>
 </html>
-
