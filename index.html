@@ -3465,35 +3465,33 @@
             pw = ph > pa ? 1 : ph < pa ? -1 : 0;
           if (rw === pw) p += 1;
         }
-        // bracket points: 3 exact, 1 correct qualifier (using brWinner which handles penalties)
+        // bracket points: +2 classifier + (+3/+1/+0 score, only if classifier correct)
         for (const [bid, res] of Object.entries(brr)) {
           const pick = u.bracket && u.bracket[bid];
           if (!pick) continue;
           const pName = pick.split("|")[0];
-          const rh = +res.h,
-            ra = +res.a;
-          // who actually passed (admin sets winner explicitly if draw, else it's the team with more goals)
+          const rh = res.h !== undefined ? +res.h : undefined;
+          const ra = res.a !== undefined ? +res.a : undefined;
           const actualWinner = res.winner || null;
-          const ph = +(pName === res.hn ? 1 : 0),
-            pa = +(pName === res.an ? 1 : 0);
-          // 3pts: exact score AND right team
-          if (res.h !== undefined && res.a !== undefined) {
-            const userPick = u.bracketScores && u.bracketScores[bid];
-            if (
-              userPick &&
-              +userPick.h === rh &&
-              +userPick.a === ra &&
-              pName ===
-                (actualWinner || (rh > ra ? res.hn : ra > rh ? res.an : null))
-            ) {
-              p += 3;
-              continue;
+          const realWinner = actualWinner ||
+            (rh !== undefined && ra !== undefined ? (rh > ra ? res.hn : ra > rh ? res.an : null) : null);
+          if (!realWinner || pName !== realWinner) continue; // wrong classifier: 0 pts
+          p += 2; // correct classifier: +2
+          // additional score points (only if classifier correct)
+          if (rh !== undefined && ra !== undefined) {
+            const userScore = u.bracketScores && u.bracketScores[bid];
+            if (userScore && userScore.h !== undefined && userScore.h !== null &&
+                userScore.a !== undefined && userScore.a !== null) {
+              const uh = +userScore.h, ua = +userScore.a;
+              if (uh === rh && ua === ra) {
+                p += 3; // exact score
+              } else {
+                const rw = rh > ra ? 1 : rh < ra ? -1 : 0;
+                const uw = uh > ua ? 1 : uh < ua ? -1 : 0;
+                if (rw === uw) p += 1; // correct win/draw direction
+              }
             }
           }
-          // 2pt: correct qualifier
-          const realWinner =
-            actualWinner || (rh > ra ? res.hn : ra > rh ? res.an : null);
-          if (realWinner && pName === realWinner) p += 2;
         }
         return p;
       }
@@ -3862,7 +3860,11 @@
             ? "✅ Ventana abierta"
             : "🔒 Ventana cerrada";
           const act = $("bActions");
-          if (uBL || cu.isAdmin || !open) {
+          if (cu.isAdmin) {
+            act.innerHTML = '<button id="aBrSaveBtn" class="bsave" style="background:var(--purple)" onclick="saveAllBrScores()">Guardar Fase Eliminatoria</button>';
+            act.classList.remove("hidden");
+            $("bLockedNote").classList.add("hidden");
+          } else if (uBL || !open) {
             act.classList.add("hidden");
             $("bLockedNote").classList.toggle("hidden", !uBL);
           } else {
@@ -4051,7 +4053,7 @@
         renderBrRounds();
       }
 
-      async function adminBrScore(sid, t1n, t1f, t2n, t2f) {
+      function adminBrScore(sid, t1n, t1f, t2n, t2f) {
         if (!cu || !cu.isAdmin) return;
         const h = $(`abr_${sid}_h`), a = $(`abr_${sid}_a`);
         if (!h || !a) return;
@@ -4062,30 +4064,43 @@
         if (hv !== null) entry.h = hv; else delete entry.h;
         if (av !== null) entry.a = av; else delete entry.a;
         if (t1n && t1n !== '?') { entry.hn = t1n; entry.an = t2n; }
-        brr[sid] = entry;
-        const brrUpd = {}; brrUpd[sid] = entry;
-        await fbUpdate('brr', brrUpd);
-        const dw = $(`abr_${sid}_dw`);
-        if (dw) {
-          const isDraw = hv !== null && av !== null && hv === av;
-          dw.style.display = isDraw ? '' : 'none';
-        }
+        // auto-detect winner from score (local only, no Firebase)
         if (hv !== null && av !== null && hv !== av) {
           const winner = hv > av ? { n: t1n, f: t1f } : { n: t2n, f: t2f };
           if (winner.n && winner.n !== '?') {
-            const upd2 = { [sid]: `${winner.n}|${winner.f}` };
-            clearDnKeys('rb', sid, upd2);
-            Object.keys(upd2).forEach(k => { if (upd2[k] === null) delete rb[k]; else rb[k] = upd2[k]; });
-            await fbUpdate('rb', upd2);
-            brr[sid].winner = winner.n;
-            const brrUpd2 = {}; brrUpd2[sid] = { ...brr[sid] };
-            await fbUpdate('brr', brrUpd2);
-            updateStats();
-            renderBrRounds();
-            return;
+            entry.winner = winner.n;
+            rb[sid] = `${winner.n}|${winner.f}`;
+            const upd = { [sid]: rb[sid] };
+            clearDnKeys('rb', sid, upd);
+            Object.keys(upd).forEach(k => { if (upd[k] === null) delete rb[k]; else rb[k] = upd[k]; });
           }
         }
-        updateStats();
+        brr[sid] = entry;
+        // show/hide draw selector row
+        const dw = $(`abr_${sid}_dw`);
+        if (dw) dw.style.display = (hv !== null && av !== null && hv === av) ? '' : 'none';
+      }
+
+      async function saveAllBrScores() {
+        const btn = $("aBrSaveBtn");
+        if (btn) { btn.disabled = true; btn.textContent = "Guardando..."; }
+        try {
+          const brrUpd = {}, rbUpd = {};
+          ROUNDS.forEach(round => {
+            for (let i = 0; i < round.c; i++) {
+              const sid = `${round.id}_${i}`;
+              if (brr[sid]) brrUpd[sid] = brr[sid];
+              if (rb[sid]) rbUpd[sid] = rb[sid];
+            }
+          });
+          if (Object.keys(brrUpd).length) await fbUpdate('brr', brrUpd);
+          if (Object.keys(rbUpd).length) await fbUpdate('rb', rbUpd);
+          updateStats();
+          if (btn) { btn.textContent = "✅ Guardado!"; setTimeout(() => { if (btn) { btn.disabled = false; btn.textContent = "Guardar Fase Eliminatoria"; } }, 2000); }
+        } catch(e) {
+          if (btn) { btn.disabled = false; btn.textContent = "Guardar Fase Eliminatoria"; }
+          alert("Error al guardar: " + e.message);
+        }
       }
 
       function _OLD_renderAdminBrRounds() {
@@ -4628,6 +4643,7 @@
       window.adminPickBr = adminPickBr;
       window.adminSlotChange = adminSlotChange;
       window.adminBrScore = adminBrScore;
+      window.saveAllBrScores = saveAllBrScores;
 
       tick();
       setInterval(tick, 30000);
