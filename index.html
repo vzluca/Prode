@@ -996,11 +996,10 @@
         border: none;
       }
       .bracket-scroll {
-        display: flex;
         overflow-x: auto;
+        overflow-y: visible;
         padding-bottom: 10px;
         -webkit-overflow-scrolling: touch;
-        gap: 2px;
       }
       .br-round {
         flex-shrink: 0;
@@ -1786,6 +1785,51 @@
         padding: 0 8px;
         font-weight: 500;
         line-height: 1.6;
+      }
+
+      /* ── BRACKET V2 ── */
+      .bkt-root { display:flex; align-items:stretch; min-height:640px; width:100%; }
+      .bkt-half { display:flex; flex:1; min-width:0; }
+      .bkt-right { flex-direction:row-reverse; }
+      .bkm-col { display:flex; flex-direction:column; flex:1; min-width:92px; }
+      .bkm-col-lbl { font-size:0.48rem; font-weight:800; letter-spacing:2px; text-transform:uppercase; text-align:center; padding:4px 0 6px; color:var(--dim); flex-shrink:0; }
+      .bkm-col-ms { display:flex; flex-direction:column; justify-content:space-around; flex:1; padding:0 2px; }
+      .bkt-center-col { display:flex; flex-direction:column; align-items:center; width:108px; flex-shrink:0; padding:0 5px; }
+      .bkt-center-inner { display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1; gap:10px; }
+      .bkt-logo { width:68px; height:auto; opacity:0.88; display:block; }
+      .bkm-match { background:rgba(255,255,255,0.04); border-radius:7px; overflow:hidden; margin:2px 0; }
+      .bkm-team { display:flex; align-items:center; gap:4px; padding:5px 6px; font-size:0.62rem; font-weight:600; color:var(--off); cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.04); transition:background 0.1s; min-height:24px; }
+      .bkm-team:last-of-type { border-bottom:none; }
+      .bkm-team:hover { background:rgba(232,53,42,0.08); }
+      .bkm-team.bkm-sel { background:rgba(232,53,42,0.15); color:var(--white); }
+      .bkm-team.bkm-won { background:rgba(0,168,107,0.12); color:var(--lime); }
+      .bkm-team.bkm-tbd { color:var(--dim2); cursor:default; font-size:0.58rem; }
+      .bkm-team.bkm-tbd:hover { background:none; }
+      .bkm-slot-row { padding:3px 4px; background:rgba(0,87,184,0.07); cursor:default; }
+      .bkm-slot-row:hover { background:rgba(0,87,184,0.07); }
+      .bkm-fl { font-size:0.76rem; flex-shrink:0; line-height:1; }
+      .bkm-nm { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+      .bkm-ck { font-size:0.52rem; color:var(--lime); margin-left:auto; flex-shrink:0; }
+      .bkm-score-row { display:flex; align-items:center; justify-content:center; gap:4px; padding:3px 5px; background:rgba(255,255,255,0.02); border-bottom:1px solid rgba(255,255,255,0.03); }
+      .bkm-si { width:22px; height:19px; background:rgba(255,255,255,0.07); border:none; color:var(--white); font-family:"Bebas Neue",sans-serif; font-size:0.8rem; text-align:center; border-radius:4px; outline:none; -moz-appearance:textfield; }
+      .bkm-si::-webkit-outer-spin-button,.bkm-si::-webkit-inner-spin-button { -webkit-appearance:none; }
+      .bkm-si:focus { background:rgba(232,53,42,0.2); }
+      .bkm-vs { font-size:0.54rem; color:var(--dim); font-weight:700; }
+      .bkm-saved-n { font-family:"Bebas Neue",sans-serif; font-size:0.78rem; color:var(--lime); }
+      .bkm-draw-row { display:flex; align-items:center; gap:3px; padding:3px 5px; background:rgba(0,87,184,0.08); border-bottom:1px solid rgba(255,255,255,0.03); flex-wrap:wrap; }
+      .bkm-dw-lbl { font-size:0.44rem; color:#6fa8f5; font-weight:800; letter-spacing:0.5px; white-space:nowrap; flex-shrink:0; }
+      .bkm-dw-btn { flex:1; padding:2px 3px; border-radius:4px; border:none; font-size:0.52rem; font-weight:700; cursor:pointer; background:rgba(255,255,255,0.07); color:var(--off); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+      .bkm-dw-btn.bkm-dw-sel { background:var(--lime); color:#000; }
+      .bkm-tsel { width:100%; background:rgba(0,87,184,0.1); border:none; color:#6fa8f5; font-family:"Figtree",sans-serif; font-size:0.56rem; padding:3px 4px; border-radius:5px; outline:none; cursor:pointer; }
+      @media (max-width:600px) {
+        .bkt-root { min-height:480px; }
+        .bkm-col { min-width:70px; }
+        .bkt-center-col { width:74px; }
+        .bkt-logo { width:46px; }
+        .bkm-team { font-size:0.54rem; padding:4px 3px; min-height:20px; gap:2px; }
+        .bkm-fl { font-size:0.66rem; }
+        .bkm-si { width:18px; height:17px; font-size:0.7rem; }
+        .bkm-col-lbl { font-size:0.42rem; letter-spacing:1px; }
       }
 
       /* ── CLASIFICADOS PAGE ── */
@@ -3375,7 +3419,7 @@
         const bg = cu.isAdmin ? "#5a3fd4" : AVCOLS[0];
         nr.innerHTML = `<div class="upill"><div class="uav" style="background:${bg};color:#fff">${ini}</div><span class="upill-nick">${cu.nick}</span>${cu.isAdmin ? "<span class='badge-admin'>ADMIN</span>" : ""}</div><button class="btn-signout" onclick="doLogout()">Salir</button>`;
         $("adminC").classList.toggle("hidden", !cu.isAdmin);
-        if (cu.isAdmin) { renderAdminGrpSel(); renderAdminSlots(); }
+        if (cu.isAdmin) { renderAdminGrpSel(); }
         updateFinStatus();
       }
       function updateFinStatus() {
@@ -3857,7 +3901,195 @@
           lm.classList.add("hidden");
         }
       }
-      function renderAdminBrRounds() {
+      function renderBrRounds() {
+        const isA = cu && cu.isAdmin;
+        const bd = isA ? rb : (cu && cu.bracket) || {};
+        const bs = (cu && !isA && cu.bracketScores) || {};
+        const lkd = cu && !isA && cu.bLocked;
+        const open = isBrOpen();
+        const canPick = !lkd && open && !isA;
+        const canScore = !lkd && !isA;
+
+        const allTeams = [];
+        GK.forEach(g => GRP[g].t.forEach(t => allTeams.push(t)));
+        allTeams.sort((a, b) => a.n.localeCompare(b.n));
+        const tOpts = isA ? ('<option value="">— —</option>' +
+          allTeams.map(t => `<option value="${t.n}">${t.f} ${t.n}</option>`).join('')) : '';
+
+        function teamRow(rnd, mIdx, pos) {
+          const sid = `${rnd}_${mIdx}`;
+          if (isA && rnd === 'R32') {
+            const si = mIdx * 2 + pos;
+            return `<div class="bkm-team bkm-slot-row"><select id="asl_${si}" class="bkm-tsel" onchange="adminSlotChange(${si})">${tOpts}</select></div>`;
+          }
+          const teams = getBrTeams(rnd, mIdx, bd);
+          const t = teams[pos] || { n: '?', f: '🏳' };
+          if (!t || t.n === '?') return `<div class="bkm-team bkm-tbd"><span class="bkm-fl">🏳</span><span class="bkm-nm">Por definir</span></div>`;
+          const pick = bd[sid];
+          const pn = pick ? pick.split('|')[0] : null;
+          const isSel = pn === t.n;
+          const tsafe = t.n.replace(/'/g, "\\'");
+          if (isA) {
+            const cls = isSel ? 'bkm-won' : '';
+            return `<div class="bkm-team ${cls}" onclick="adminPickBr('${sid}','${tsafe}','${t.f}')"><span class="bkm-fl">${t.f}</span><span class="bkm-nm">${t.n}</span>${isSel ? '<span class="bkm-ck">✓</span>' : ''}</div>`;
+          }
+          const cls = isSel ? (lkd ? 'bkm-won' : 'bkm-sel') : '';
+          const oc = canPick ? `onclick="pickBr('${sid}','${tsafe}','${t.f}')"` : '';
+          return `<div class="bkm-team ${cls}" ${oc}><span class="bkm-fl">${t.f}</span><span class="bkm-nm">${t.n}</span>${isSel ? '<span class="bkm-ck">✓</span>' : ''}</div>`;
+        }
+
+        function scoreRow(rnd, mIdx) {
+          const sid = `${rnd}_${mIdx}`;
+          const res = brr[sid] || {};
+          const sc = bs[sid] || {};
+          if (isA) {
+            const teams = rnd === 'R32'
+              ? [brSlots[mIdx*2]||{n:'?',f:'🏳'}, brSlots[mIdx*2+1]||{n:'?',f:'🏳'}]
+              : getBrTeams(rnd, mIdx, rb);
+            const t1 = teams[0]||{n:'?',f:'🏳'}, t2 = teams[1]||{n:'?',f:'🏳'};
+            const hv = res.h !== undefined ? res.h : '';
+            const av = res.a !== undefined ? res.a : '';
+            const isDraw = hv !== '' && av !== '' && +hv === +av;
+            const w = res.winner || '';
+            const t1s = t1.n.replace(/'/g, "\\'"), t2s = t2.n.replace(/'/g, "\\'");
+            return `<div class="bkm-score-row">
+              <input type="number" class="bkm-si" min="0" max="20" value="${hv}" placeholder="–" id="abr_${sid}_h" oninput="adminBrScore('${sid}','${t1s}','${t1.f}','${t2s}','${t2.f}')">
+              <span class="bkm-vs">-</span>
+              <input type="number" class="bkm-si" min="0" max="20" value="${av}" placeholder="–" id="abr_${sid}_a" oninput="adminBrScore('${sid}','${t1s}','${t1.f}','${t2s}','${t2.f}')">
+            </div>
+            <div id="abr_${sid}_dw" class="bkm-draw-row" style="${isDraw ? '' : 'display:none'}">
+              <span class="bkm-dw-lbl">ET/Pen:</span>
+              <button id="abr_${sid}_dw1" class="bkm-dw-btn ${w===t1.n?'bkm-dw-sel':''}" onclick="adminPickBr('${sid}','${t1s}','${t1.f}')">${t1.f} ${t1.n||'?'}</button>
+              <button id="abr_${sid}_dw2" class="bkm-dw-btn ${w===t2.n?'bkm-dw-sel':''}" onclick="adminPickBr('${sid}','${t2s}','${t2.f}')">${t2.f} ${t2.n||'?'}</button>
+            </div>`;
+          }
+          const hv = sc.h !== undefined && sc.h !== null ? sc.h : '';
+          const av = sc.a !== undefined && sc.a !== null ? sc.a : '';
+          if (canScore) {
+            return `<div class="bkm-score-row">
+              <input type="number" class="bkm-si" min="0" max="20" value="${hv}" placeholder="–" oninput="saveBrScore('${sid}','h',this.value)">
+              <span class="bkm-vs">-</span>
+              <input type="number" class="bkm-si" min="0" max="20" value="${av}" placeholder="–" oninput="saveBrScore('${sid}','a',this.value)">
+            </div>`;
+          }
+          if (hv !== '') return `<div class="bkm-score-row"><span class="bkm-saved-n">${hv} - ${av}</span></div>`;
+          return '';
+        }
+
+        function matchCard(rnd, idx) {
+          return `<div class="bkm-match" id="bkm_${rnd}_${idx}">
+            ${teamRow(rnd, idx, 0)}
+            ${scoreRow(rnd, idx)}
+            ${teamRow(rnd, idx, 1)}
+          </div>`;
+        }
+
+        function col(rnd, start, count, lbl) {
+          let cards = '';
+          for (let i = start; i < start + count; i++) cards += matchCard(rnd, i);
+          return `<div class="bkm-col">
+            <div class="bkm-col-lbl">${lbl}</div>
+            <div class="bkm-col-ms">${cards}</div>
+          </div>`;
+        }
+
+        $("bRounds").innerHTML = `<div class="bkt-root">
+          <div class="bkt-half bkt-left">
+            ${col('R32', 0, 8, '16avos')}
+            ${col('R16', 0, 4, 'Octavos')}
+            ${col('QF', 0, 2, 'Cuartos')}
+            ${col('SF', 0, 1, 'Semis')}
+          </div>
+          <div class="bkt-center-col">
+            <div class="bkm-col-lbl">Final</div>
+            <div class="bkt-center-inner">
+              <img src="images/logomundial.png" class="bkt-logo" alt="">
+              ${matchCard('F', 0)}
+            </div>
+          </div>
+          <div class="bkt-half bkt-right">
+            ${col('SF', 1, 1, 'Semis')}
+            ${col('QF', 2, 2, 'Cuartos')}
+            ${col('R16', 4, 4, 'Octavos')}
+            ${col('R32', 8, 8, '16avos')}
+          </div>
+        </div>`;
+
+        if (isA) {
+          for (let i = 0; i < 32; i++) {
+            const sel = $(`asl_${i}`);
+            if (sel && brSlots[i] && brSlots[i].n) sel.value = brSlots[i].n;
+          }
+        }
+      }
+
+      async function adminPickBr(sid, name, flag) {
+        if (!cu || !cu.isAdmin) return;
+        const val = `${name}|${flag}`;
+        const upd = { [sid]: val };
+        clearDnKeys('rb', sid, upd);
+        await fbUpdate('rb', upd);
+        Object.keys(upd).forEach(k => { if (upd[k] === null) delete rb[k]; else rb[k] = upd[k]; });
+        if (!brr[sid]) brr[sid] = {};
+        brr[sid].winner = name;
+        const brrUpd = {}; brrUpd[sid] = { ...brr[sid] };
+        await fbUpdate('brr', brrUpd);
+        updateStats();
+        renderBrRounds();
+      }
+
+      async function adminSlotChange(slotIdx) {
+        const sel = $(`asl_${slotIdx}`);
+        if (!sel) return;
+        const name = sel.value;
+        let flag = '🏳';
+        GK.forEach(g => GRP[g].t.forEach(t => { if (t.n === name) flag = t.f; }));
+        const upd = {};
+        upd[slotIdx] = name ? { n: name, f: flag } : null;
+        await fbUpdate('brSlots', upd);
+        if (name) brSlots[slotIdx] = { n: name, f: flag };
+        else delete brSlots[slotIdx];
+        renderBrRounds();
+      }
+
+      async function adminBrScore(sid, t1n, t1f, t2n, t2f) {
+        if (!cu || !cu.isAdmin) return;
+        const h = $(`abr_${sid}_h`), a = $(`abr_${sid}_a`);
+        if (!h || !a) return;
+        const hv = h.value === '' ? null : +h.value;
+        const av = a.value === '' ? null : +a.value;
+        if (!brr[sid]) brr[sid] = {};
+        const entry = { ...brr[sid] };
+        if (hv !== null) entry.h = hv; else delete entry.h;
+        if (av !== null) entry.a = av; else delete entry.a;
+        if (t1n && t1n !== '?') { entry.hn = t1n; entry.an = t2n; }
+        brr[sid] = entry;
+        const brrUpd = {}; brrUpd[sid] = entry;
+        await fbUpdate('brr', brrUpd);
+        const dw = $(`abr_${sid}_dw`);
+        if (dw) {
+          const isDraw = hv !== null && av !== null && hv === av;
+          dw.style.display = isDraw ? '' : 'none';
+        }
+        if (hv !== null && av !== null && hv !== av) {
+          const winner = hv > av ? { n: t1n, f: t1f } : { n: t2n, f: t2f };
+          if (winner.n && winner.n !== '?') {
+            const upd2 = { [sid]: `${winner.n}|${winner.f}` };
+            clearDnKeys('rb', sid, upd2);
+            Object.keys(upd2).forEach(k => { if (upd2[k] === null) delete rb[k]; else rb[k] = upd2[k]; });
+            await fbUpdate('rb', upd2);
+            brr[sid].winner = winner.n;
+            const brrUpd2 = {}; brrUpd2[sid] = { ...brr[sid] };
+            await fbUpdate('brr', brrUpd2);
+            updateStats();
+            renderBrRounds();
+            return;
+          }
+        }
+        updateStats();
+      }
+
+      function _OLD_renderAdminBrRounds() {
         const allTeams = [];
         GK.forEach(g => GRP[g].t.forEach(t => allTeams.push(t)));
         allTeams.sort((a, b) => a.n.localeCompare(b.n));
@@ -3998,8 +4230,8 @@
         renderAdminBrRounds();
       }
 
-      function renderBrRounds() {
-        if (cu && cu.isAdmin) { renderAdminBrRounds(); return; }
+      function _OLD_renderBrRounds() {
+        if (true) return;
         const isA = cu && cu.isAdmin,
           bd = isA ? rb : (cu && cu.bracket) || {},
           bs = (cu && !isA && cu.bracketScores) || {},
@@ -4394,10 +4626,9 @@
       window.renderClasificados = renderClasificados;
       window.saveBrScore = saveBrScore;
       window.saveAdminSlots = saveAdminSlots;
-      window.renderAdminBrRounds = renderAdminBrRounds;
-      window.adminBrCheckDraw = adminBrCheckDraw;
-      window.setAdminBrWinner = setAdminBrWinner;
-      window.saveAdminRound = saveAdminRound;
+      window.adminPickBr = adminPickBr;
+      window.adminSlotChange = adminSlotChange;
+      window.adminBrScore = adminBrScore;
 
       tick();
       setInterval(tick, 30000);
