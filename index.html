@@ -3465,8 +3465,36 @@
             pw = ph > pa ? 1 : ph < pa ? -1 : 0;
           if (rw === pw) p += 1;
         }
-        // bracket points: +2 classifier + (+3/+1/+0 score, only if classifier correct)
+        // R32: +2 por equipo clasificado acertado (vs proyección de grupos) + score independiente
+        if (Object.keys(brSlots).length > 0) {
+          const userQ = getR32Qualifiers(u);
+          for (let i = 0; i < 16; i++) {
+            const s1 = brSlots[i * 2], s2 = brSlots[i * 2 + 1];
+            if (s1 && s1.n && userQ.has(s1.n)) p += 2;
+            if (s2 && s2.n && userQ.has(s2.n)) p += 2;
+            // score points para el partido de 16avos (independiente del clasificado)
+            const sid = `R32_${i}`;
+            const res = brr[sid];
+            if (res && res.h !== undefined && res.a !== undefined) {
+              const userScore = u.bracketScores && u.bracketScores[sid];
+              if (userScore && userScore.h !== undefined && userScore.h !== null &&
+                  userScore.a !== undefined && userScore.a !== null) {
+                const uh = +userScore.h, ua = +userScore.a;
+                const rh = +res.h, ra = +res.a;
+                if (uh === rh && ua === ra) {
+                  p += 3;
+                } else {
+                  const rw = rh > ra ? 1 : rh < ra ? -1 : 0;
+                  const uw = uh > ua ? 1 : uh < ua ? -1 : 0;
+                  if (rw === uw) p += 1;
+                }
+              }
+            }
+          }
+        }
+        // R16+: +2 por clasificado acertado en bracket + score solo si acertó clasificado
         for (const [bid, res] of Object.entries(brr)) {
+          if (bid.startsWith('R32_')) continue;
           const pick = u.bracket && u.bracket[bid];
           if (!pick) continue;
           const pName = pick.split("|")[0];
@@ -3475,20 +3503,19 @@
           const actualWinner = res.winner || null;
           const realWinner = actualWinner ||
             (rh !== undefined && ra !== undefined ? (rh > ra ? res.hn : ra > rh ? res.an : null) : null);
-          if (!realWinner || pName !== realWinner) continue; // wrong classifier: 0 pts
-          p += 2; // correct classifier: +2
-          // additional score points (only if classifier correct)
+          if (!realWinner || pName !== realWinner) continue;
+          p += 2;
           if (rh !== undefined && ra !== undefined) {
             const userScore = u.bracketScores && u.bracketScores[bid];
             if (userScore && userScore.h !== undefined && userScore.h !== null &&
                 userScore.a !== undefined && userScore.a !== null) {
               const uh = +userScore.h, ua = +userScore.a;
               if (uh === rh && ua === ra) {
-                p += 3; // exact score
+                p += 3;
               } else {
                 const rw = rh > ra ? 1 : rh < ra ? -1 : 0;
                 const uw = uh > ua ? 1 : uh < ua ? -1 : 0;
-                if (rw === uw) p += 1; // correct win/draw direction
+                if (rw === uw) p += 1;
               }
             }
           }
@@ -3509,6 +3536,58 @@
         if (rw === pw) return 1;
         return 0;
       }
+      function calcGroupStandingsForUser(g, u) {
+        const grp = GRP[g];
+        const teams = {};
+        grp.t.forEach(t => {
+          teams[t.n] = { n: t.n, f: t.f, pts: 0, pj: 0, gf: 0, gc: 0 };
+        });
+        let hasPreds = false;
+        grp.m.forEach(m => {
+          const pr = u.pred && u.pred[m.id];
+          if (!pr || pr.h === undefined || pr.h === null || pr.a === undefined || pr.a === null) return;
+          const ph = +pr.h, pa = +pr.a;
+          if (isNaN(ph) || isNaN(pa)) return;
+          hasPreds = true;
+          const ht = teams[m.h], at = teams[m.a];
+          if (!ht || !at) return;
+          ht.pj++; at.pj++;
+          ht.gf += ph; ht.gc += pa;
+          at.gf += pa; at.gc += ph;
+          if (ph > pa) { ht.pts += 3; }
+          else if (pa > ph) { at.pts += 3; }
+          else { ht.pts++; at.pts++; }
+        });
+        if (!hasPreds) return null;
+        return Object.values(teams).sort((a, b) => {
+          if (b.pts !== a.pts) return b.pts - a.pts;
+          const gdA = a.gf - a.gc, gdB = b.gf - b.gc;
+          if (gdB !== gdA) return gdB - gdA;
+          return b.gf - a.gf;
+        });
+      }
+
+      function getR32Qualifiers(u) {
+        const qualifiers = new Set();
+        const thirds = [];
+        GK.forEach(g => {
+          const st = calcGroupStandingsForUser(g, u);
+          if (!st) return;
+          if (st[0]) qualifiers.add(st[0].n);
+          if (st[1]) qualifiers.add(st[1].n);
+          if (st[2]) thirds.push(st[2]);
+        });
+        // best 8 thirds qualify
+        thirds.sort((a, b) => {
+          if (b.pts !== a.pts) return b.pts - a.pts;
+          const gdA = a.gf - a.gc, gdB = b.gf - b.gc;
+          if (gdB !== gdA) return gdB - gdA;
+          return b.gf - a.gf;
+        });
+        thirds.slice(0, 8).forEach(t => qualifiers.add(t.n));
+        return qualifiers;
+      }
+
       function calcGroupStandings(g) {
         const grp = GRP[g];
         const teams = {};
