@@ -2069,7 +2069,7 @@
             </p>
             <div>
               <div class="fl-window">
-                📅 27 jun 00:00 → 28 jun 10:00 (hora Argentina)
+                📅 27 jun 00:00 → 28 jun 15:00 (hora Argentina)
               </div>
             </div>
             <div style="margin: 12px 0">
@@ -2107,7 +2107,7 @@
               <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:3px;margin-bottom:6px">¿QUERÉS SEGUIR JUGANDO?</div>
               <p style="font-size:0.72rem;color:var(--dim);margin-bottom:14px;line-height:1.8;font-weight:400">
                 Podés ver la llave, pero para <strong style="color:var(--white)">pronosticar y sumar puntos</strong> tenés que anotarte a la Fase Final.<br>
-                <span style="color:var(--lime);font-weight:700">+$1.000 al pozo</span> · Los pronósticos cierran el <strong style="color:var(--white)">28 jun a las 10:00hs</strong>.
+                <span style="color:var(--lime);font-weight:700">+$1.000 al pozo</span> · Los pronósticos cierran el <strong style="color:var(--white)">28 jun a las 15:00hs</strong>.
               </p>
               <button class="btn-hero" onclick="joinFinal()" style="font-size:0.8rem">
                 ¡Quiero seguir jugando el Prode! — +$1.000
@@ -2388,7 +2388,7 @@
         </div>
         <div style="background:rgba(0,168,107,0.06);border-radius:12px;padding:12px 14px;margin-bottom:14px">
           <div style="font-size:0.54rem;font-weight:800;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:4px">Ventana de inscripción</div>
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--lime);letter-spacing:2px">27 Jun 00:00 → 28 Jun 10:00 hs</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--lime);letter-spacing:2px">27 Jun 00:00 → 28 Jun 15:00 hs</div>
         </div>
         <div style="font-size:0.74rem;color:var(--off);line-height:2;margin-bottom:16px">
           <div style="margin-bottom:3px">📍 Acercate al <strong style="color:var(--white)">Dto. Legajos</strong></div>
@@ -3151,7 +3151,7 @@
       const GK = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
       const DL_G = new Date("2026-06-24T23:59:00-03:00");
       const BR_O = new Date("2026-06-27T00:00:00-03:00");
-      const BR_C = new Date("2026-06-28T10:00:00-03:00");
+      const BR_C = new Date("2026-06-28T15:00:00-03:00");
       const ADMIN = "admin",
         APASS = "prode2026admin";
       const FG = 2000,
@@ -3488,7 +3488,7 @@
           if (rw === pw) p += 1;
         }
         // puntos de bracket/clasificados: SOLO si el usuario se anotó en la fase final
-        // Y SOLO a partir de BR_C (28 jun 10hs) — antes de esa fecha no suman nada
+        // Y SOLO a partir de BR_C (28 jun 15hs) — antes de esa fecha no suman nada
         const brActive = new Date() >= BR_C;
         if (!brActive || !u.inFinal) return p;
 
