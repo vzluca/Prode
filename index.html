@@ -2228,6 +2228,16 @@
               border-top: 1px solid rgba(255, 255, 255, 0.05);
             "
           >
+            <div class="admin-h">Anotados Fase Final (+$1.000)</div>
+            <div id="adminFinalList"></div>
+          </div>
+          <div
+            style="
+              margin-top: 14px;
+              padding-top: 12px;
+              border-top: 1px solid rgba(255, 255, 255, 0.05);
+            "
+          >
             <div class="admin-h">Ventana fase final</div>
             <p
               style="
@@ -3437,8 +3447,9 @@
         }
         if (!confirm("¿Confirmás? Sumás $1.000 al pozo para la fase final."))
           return;
-        await fbUpdate("users/" + cu.nick, { inFinal: true });
+        await fbUpdate("users/" + cu.nick, { inFinal: true, inFinalTs: Date.now() });
         cu.inFinal = true;
+        cu.inFinalTs = Date.now();
         updateStats();
         renderBracket();
       }
@@ -3448,7 +3459,7 @@
       // ═══════════════════════════════════════
       function calcPts(u) {
         let p = 0;
-        // group stage points
+        // group stage points — siempre cuentan
         for (const [mid, r] of Object.entries(rr)) {
           const pr = u.pred && u.pred[mid];
           if (!pr) continue;
@@ -3465,6 +3476,11 @@
             pw = ph > pa ? 1 : ph < pa ? -1 : 0;
           if (rw === pw) p += 1;
         }
+        // puntos de bracket/clasificados: SOLO si el usuario se anotó en la fase final
+        // Y SOLO a partir de BR_C (28 jun 10hs) — antes de esa fecha no suman nada
+        const brActive = new Date() >= BR_C;
+        if (!brActive || !u.inFinal) return p;
+
         // R32: +2 por equipo clasificado acertado (vs proyección de grupos) + score independiente
         if (Object.keys(brSlots).length > 0) {
           const userQ = getR32Qualifiers(u);
@@ -3779,6 +3795,7 @@
         $("sGrupos").textContent = fmt(n * FG);
         $("sFinal").textContent = fmt(fn * FF);
         renderLB();
+        renderAdminFinalList();
       }
       function renderLB() {
         const lb = getLB();
@@ -4653,6 +4670,29 @@
         brSlots = { ...updates };
         alert(`✅ ${cnt} equipos guardados en las llaves.`);
       }
+      function renderAdminFinalList() {
+        const el = $("adminFinalList");
+        if (!el) return;
+        const joined = Object.values(users)
+          .filter(u => u.inFinal)
+          .sort((a, b) => (a.inFinalTs || 0) - (b.inFinalTs || 0));
+        if (!joined.length) {
+          el.innerHTML = '<div style="font-size:0.64rem;color:var(--dim);padding:4px 0">Nadie se anotó aún.</div>';
+          return;
+        }
+        el.innerHTML = joined.map((u, i) => {
+          const ts = u.inFinalTs
+            ? new Date(u.inFinalTs).toLocaleString('es-AR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })
+            : '—';
+          return `<div style="display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:0.78rem;color:var(--lime);width:14px;text-align:center">${i+1}</div>
+            <div style="flex:1;font-size:0.7rem;font-weight:600;color:var(--off)">${u.nick}</div>
+            <div style="font-size:0.58rem;color:var(--dim)">${ts}</div>
+          </div>`;
+        }).join('') +
+        `<div style="font-size:0.6rem;color:var(--lime);margin-top:6px;font-weight:700">${joined.length} anotado${joined.length !== 1 ? 's' : ''} · ${fmt(joined.length * FF)} al pozo</div>`;
+      }
+
       async function adminToggleFinal() {
         const nv = afForce === null ? true : afForce === true ? false : null;
         await fbSet("afForce", nv);
@@ -4757,6 +4797,7 @@
       window.adminBrScoreInput = adminBrScoreInput;
       window.adminBrScore = adminBrScore;
       window.saveAllBrScores = saveAllBrScores;
+      window.renderAdminFinalList = renderAdminFinalList;
 
       tick();
       setInterval(tick, 30000);
