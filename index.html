@@ -2102,7 +2102,18 @@
               <span class="sh-title">Bracket Fase Eliminatoria</span>
               <span class="sh-right" id="bStatus"></span>
             </div>
-            <p
+            <!-- Banner para usuarios logueados que aún no se anotaron -->
+            <div id="bJoinBanner" class="hidden" style="margin-bottom:18px;padding:18px 20px;background:rgba(232,53,42,0.07);border-radius:12px;text-align:center">
+              <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:3px;margin-bottom:6px">¿QUERÉS SEGUIR JUGANDO?</div>
+              <p style="font-size:0.72rem;color:var(--dim);margin-bottom:14px;line-height:1.8;font-weight:400">
+                Podés ver la llave, pero para <strong style="color:var(--white)">pronosticar y sumar puntos</strong> tenés que anotarte a la Fase Final.<br>
+                <span style="color:var(--lime);font-weight:700">+$1.000 al pozo</span> · Los pronósticos cierran el <strong style="color:var(--white)">28 jun a las 10:00hs</strong>.
+              </p>
+              <button class="btn-hero" onclick="joinFinal()" style="font-size:0.8rem">
+                ¡Quiero seguir jugando el Prode! — +$1.000
+              </button>
+            </div>
+            <p id="bPickDesc"
               style="
                 font-size: 0.7rem;
                 color: var(--dim);
@@ -3948,7 +3959,10 @@
           uBL = cu && !cu.isAdmin && cu.bLocked;
         const fl = $("finalLocked"),
           bp = $("bracketPanel");
-        if (uInF || (cu && cu.isAdmin)) {
+
+        // Mostrar el bracket a: admin, inFinal, o cualquier logueado cuando la ventana está abierta o cerrada (post exp)
+        const showBracket = cu && (cu.isAdmin || uInF || open || exp);
+        if (showBracket) {
           fl.classList.add("hidden");
           bp.classList.remove("hidden");
           renderBrRounds();
@@ -3956,16 +3970,31 @@
             ? "✅ Ventana abierta"
             : "🔒 Ventana cerrada";
           const act = $("bActions");
+          const joinBanner = $("bJoinBanner");
+          const pickDesc = $("bPickDesc");
           if (cu.isAdmin) {
             act.innerHTML = '<button id="aBrSaveBtn" class="bsave" style="background:var(--purple)" onclick="saveAllBrScores()">Guardar Fase Eliminatoria</button>';
             act.classList.remove("hidden");
             $("bLockedNote").classList.add("hidden");
+            if (joinBanner) joinBanner.classList.add("hidden");
+            if (pickDesc) pickDesc.style.display = "";
+          } else if (!uInF && open) {
+            // logueado, ventana abierta, pero no se anotó → mostrar banner, ocultar picks
+            act.classList.add("hidden");
+            $("bLockedNote").classList.add("hidden");
+            if (joinBanner) joinBanner.classList.remove("hidden");
+            if (pickDesc) pickDesc.style.display = "none";
           } else if (uBL || !open) {
             act.classList.add("hidden");
             $("bLockedNote").classList.toggle("hidden", !uBL);
+            if (joinBanner) joinBanner.classList.add("hidden");
+            if (pickDesc) pickDesc.style.display = "";
           } else {
+            // inFinal, ventana abierta, no bloqueado → puede pronosticar
             act.classList.remove("hidden");
             $("bLockedNote").classList.add("hidden");
+            if (joinBanner) joinBanner.classList.add("hidden");
+            if (pickDesc) pickDesc.style.display = "";
           }
           return;
         }
@@ -3974,28 +4003,18 @@
         const cdEl = $("flCd"),
           jb = $("flJoin"),
           lm = $("flLogin");
-        if (open) {
-          cdEl.textContent = "";
-          if (cu && !cu.isAdmin) {
-            jb.classList.remove("hidden");
-            lm.classList.add("hidden");
-          } else {
-            jb.classList.add("hidden");
-            lm.classList.remove("hidden");
-          }
-        } else if (!exp) {
-          const diff = BR_O - new Date(),
-            d = Math.floor(diff / 86400000),
-            h = Math.floor((diff % 86400000) / 3600000),
-            m2 = Math.floor((diff % 3600000) / 60000);
-          cdEl.textContent =
-            d > 0 ? `Abre en ${d}d ${h}h ${m2}m` : `Abre en ${h}h ${m2}m`;
-          jb.classList.add("hidden");
+        // ventana no abierta aún
+        const diff = BR_O - new Date(),
+          d = Math.floor(diff / 86400000),
+          h = Math.floor((diff % 86400000) / 3600000),
+          m2 = Math.floor((diff % 3600000) / 60000);
+        cdEl.textContent =
+          d > 0 ? `Abre en ${d}d ${h}h ${m2}m` : `Abre en ${h}h ${m2}m`;
+        jb.classList.add("hidden");
+        if (cu && !cu.isAdmin) {
           lm.classList.add("hidden");
         } else {
-          cdEl.textContent = "Ventana cerrada.";
-          jb.classList.add("hidden");
-          lm.classList.add("hidden");
+          lm.classList.remove("hidden");
         }
       }
       function renderBrRounds() {
@@ -4004,8 +4023,9 @@
         const bs = (cu && !isA && cu.bracketScores) || {};
         const lkd = cu && !isA && cu.bLocked;
         const open = isBrOpen();
-        const canPick = !lkd && open && !isA;
-        const canScore = !lkd && !isA;
+        const uInF = cu && !cu.isAdmin && cu.inFinal;
+        const canPick = !lkd && open && !isA && !!uInF;
+        const canScore = !lkd && !isA && !!uInF;
 
         const allTeams = [];
         GK.forEach(g => GRP[g].t.forEach(t => allTeams.push(t)));
@@ -4444,7 +4464,7 @@
         ];
       }
       async function pickBr(sid, name, flag) {
-        if (!cu || cu.isAdmin || cu.bLocked || !isBrOpen()) return;
+        if (!cu || cu.isAdmin || cu.bLocked || !isBrOpen() || !cu.inFinal) return;
         const val = `${name}|${flag}`;
         const update2 = {};
         update2[sid] = val;
@@ -4458,7 +4478,7 @@
         renderBrRounds();
       }
       async function saveBrScore(bid, side, val) {
-        if (!cu || cu.isAdmin || cu.bLocked) return;
+        if (!cu || cu.isAdmin || cu.bLocked || !cu.inFinal) return;
         const data = {};
         data[side] = val === "" ? null : parseInt(val);
         await fbUpdate(`users/${cu.nick}/bracketScores/${bid}`, data);
