@@ -2134,6 +2134,7 @@
               Para pronosticar: <strong style="color:var(--off)">hacé clic en el equipo</strong> que creés que avanza en cada partido (hasta la Final inclusive), y también podés ingresar el <strong style="color:var(--off)">resultado numérico</strong> (ej: 1 - 0) en los casilleros de cada cruce. Una vez guardado no se puede modificar.
             </p>
             <div class="bracket-scroll" id="bRounds"></div>
+            <div id="bracketSummary"></div>
             <div class="gact" id="bActions" style="margin-top: 16px">
               <button
                 class="bsave"
@@ -3477,10 +3478,16 @@
       // ═══════════════════════════════════════
       // STATS & LB
       // ═══════════════════════════════════════
+      // mapa mid → grupo, construido una vez
+      const MID_GRP = {};
+      GK.forEach(g => GRP[g].m.forEach(m => { MID_GRP[m.id] = g; }));
+
       function calcPts(u) {
         let p = 0;
-        // group stage points — siempre cuentan
+        // group stage: solo cuentan partidos de grupos que el usuario guardó (lockedG)
         for (const [mid, r] of Object.entries(rr)) {
+          const grp = MID_GRP[mid];
+          if (!grp || !u.lockedG || !u.lockedG.includes(grp)) continue;
           const pr = u.pred && u.pred[mid];
           if (!pr) continue;
           const rh = +r.h,
@@ -3496,10 +3503,10 @@
             pw = ph > pa ? 1 : ph < pa ? -1 : 0;
           if (rw === pw) p += 1;
         }
-        // puntos de bracket/clasificados: SOLO si el usuario se anotó en la fase final
-        // Y SOLO a partir de BR_C (28 jun 15hs) — antes de esa fecha no suman nada
+        // puntos de bracket/clasificados: SOLO si el usuario se anotó en la fase final,
+        // guardó el bracket (bLocked), y la ventana ya cerró
         const brActive = new Date() >= BR_C;
-        if (!brActive || !u.inFinal) return p;
+        if (!brActive || !u.inFinal || !u.bLocked) return p;
 
         // R32: +2 por equipo clasificado acertado (vs proyección de grupos) + score independiente
         if (Object.keys(brSlots).length > 0) {
@@ -3560,6 +3567,9 @@
       }
       function getMatchPts(mid) {
         if (!cu || cu.isAdmin) return null;
+        // solo mostrar puntos si el grupo fue guardado
+        const grp = MID_GRP[mid];
+        if (!grp || !cu.lockedG || !cu.lockedG.includes(grp)) return null;
         const r = rr[mid];
         if (!r || r.h === undefined || r.a === undefined) return null;
         const pr = cu.pred && cu.pred[mid];
@@ -3975,6 +3985,7 @@
           fl.classList.add("hidden");
           bp.classList.remove("hidden");
           renderBrRounds();
+          renderBracketSummary();
           $("bStatus").textContent = open
             ? "✅ Ventana abierta"
             : "🔒 Ventana cerrada";
@@ -4038,6 +4049,89 @@
           lm.classList.remove("hidden");
         }
       }
+      function renderBracketSummary() {
+        const el = $("bracketSummary");
+        if (!el) return;
+        const brActive = new Date() >= BR_C;
+        if (!cu || cu.isAdmin || !cu.bLocked || !brActive) { el.innerHTML = ''; return; }
+        const u = cu;
+
+        const userQ = getR32Qualifiers(u);
+        let r32Cl = 0, r32Sc = 0;
+        for (let i = 0; i < 16; i++) {
+          const s1 = brSlots[i*2], s2 = brSlots[i*2+1];
+          if (s1 && s1.n && userQ.has(s1.n)) r32Cl += 2;
+          if (s2 && s2.n && userQ.has(s2.n)) r32Cl += 2;
+          const sid = `R32_${i}`, res = brr[sid];
+          if (res && res.h !== undefined && res.a !== undefined) {
+            const sc = u.bracketScores && u.bracketScores[sid];
+            if (sc && sc.h !== null && sc.h !== undefined && sc.a !== null && sc.a !== undefined) {
+              const uh = +sc.h, ua = +sc.a, rh = +res.h, ra = +res.a;
+              if (uh === rh && ua === ra) r32Sc += 3;
+              else { const rw = rh>ra?1:rh<ra?-1:0, uw = uh>ua?1:uh<ua?-1:0; if (rw===uw) r32Sc += 1; }
+            }
+          }
+        }
+
+        const rnds = [
+          { id:'R32', label:'16avos', cl: r32Cl, sc: r32Sc },
+          ...['R16','QF','SF','F'].map(rnd => {
+            const rd = ROUNDS.find(r => r.id === rnd);
+            const labels = { R16:'Octavos', QF:'Cuartos', SF:'Semis', F:'Final' };
+            let cl = 0, sc = 0;
+            for (let i = 0; i < rd.c; i++) {
+              const sid = `${rnd}_${i}`, res = brr[sid];
+              if (!res) continue;
+              const pick = u.bracket && u.bracket[sid];
+              if (!pick) continue;
+              const pName = pick.split('|')[0];
+              const realWinner = res.winner || (res.h !== undefined && res.a !== undefined && +res.h !== +res.a ? (+res.h > +res.a ? res.hn : res.an) : null);
+              if (!realWinner || pName !== realWinner) continue;
+              cl += 2;
+              const s = u.bracketScores && u.bracketScores[sid];
+              if (s && s.h !== null && s.h !== undefined && s.a !== null && s.a !== undefined && res.h !== undefined && res.a !== undefined) {
+                const uh = +s.h, ua = +s.a, rh = +res.h, ra = +res.a;
+                if (uh === rh && ua === ra) sc += 3;
+                else { const rw = rh>ra?1:rh<ra?-1:0, uw = uh>ua?1:uh<ua?-1:0; if (rw===uw) sc += 1; }
+              }
+            }
+            return { id: rnd, label: labels[rnd], cl, sc };
+          })
+        ];
+
+        const total = rnds.reduce((s, r) => s + r.cl + r.sc, 0);
+        const rowsHtml = rnds.map(r => {
+          const t = r.cl + r.sc;
+          return `<tr style="border-bottom:1px solid rgba(255,255,255,0.04)">
+            <td style="padding:7px 10px;font-size:0.68rem;color:var(--off);font-weight:700">${r.label}</td>
+            <td style="padding:7px 10px;font-size:0.68rem;text-align:center">${r.cl > 0 ? `<span style="color:var(--lime);font-weight:700">+${r.cl}</span>` : `<span style="color:var(--dim2)">—</span>`}</td>
+            <td style="padding:7px 10px;font-size:0.68rem;text-align:center">${r.sc > 0 ? `<span style="color:#6fa8f5;font-weight:700">+${r.sc}</span>` : `<span style="color:var(--dim2)">—</span>`}</td>
+            <td style="padding:7px 10px;font-size:0.68rem;text-align:center;font-family:'Bebas Neue',sans-serif;font-size:0.9rem">${t > 0 ? `<span style="color:var(--white)">${t}</span>` : `<span style="color:var(--dim)">0</span>`}</td>
+          </tr>`;
+        }).join('');
+
+        el.innerHTML = `<div style="margin-top:20px;border-top:1px solid rgba(255,255,255,0.07);padding-top:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div style="font-size:0.58rem;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:var(--dim)">Mis puntos fase final</div>
+            <div><span style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--lime)">${total}</span> <span style="font-size:0.56rem;color:var(--dim);font-weight:700;letter-spacing:1px;text-transform:uppercase">pts</span></div>
+          </div>
+          <table style="width:100%;border-collapse:collapse;background:rgba(255,255,255,0.02);border-radius:10px;overflow:hidden">
+            <thead>
+              <tr style="border-bottom:1px solid rgba(255,255,255,0.08)">
+                <th style="padding:5px 10px;font-size:0.5rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--dim);text-align:left">Ronda</th>
+                <th style="padding:5px 10px;font-size:0.5rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--lime);text-align:center">Clasificados</th>
+                <th style="padding:5px 10px;font-size:0.5rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#6fa8f5;text-align:center">Resultados</th>
+                <th style="padding:5px 10px;font-size:0.5rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--off);text-align:center">Total</th>
+              </tr>
+            </thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+          <div style="font-size:0.54rem;color:var(--dim);margin-top:8px;line-height:1.8">
+            <span style="color:var(--lime)">Clasificados</span>: +2 por equipo que avanza acertado &nbsp;·&nbsp; <span style="color:#6fa8f5">Resultados</span>: +3 exacto · +1 ganador correcto
+          </div>
+        </div>`;
+      }
+
       function renderBrRounds() {
         const isA = cu && cu.isAdmin;
         const bd = isA ? rb : (cu && cu.bracket) || {};
