@@ -4339,7 +4339,7 @@
             for (let i = 0; i < round.c; i++) {
               const sid = `${round.id}_${i}`;
               const entry = brr[sid];
-              if (!entry) return;
+              if (!entry) continue;
               // derive winner from score if not set and score is clear
               if (!entry.winner && entry.h !== undefined && entry.a !== undefined && +entry.h !== +entry.a) {
                 const teams = getBrTeams(round.id, i, rb);
