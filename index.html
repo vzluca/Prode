@@ -4166,7 +4166,7 @@
             const si = mIdx * 2 + pos;
             return `<div class="bkm-team bkm-slot-row"><select id="asl_${si}" class="bkm-tsel" onchange="adminSlotChange(${si})">${tOpts}</select></div>`;
           }
-          const teams = getBrTeams(rnd, mIdx, bd);
+          const teams = getBrTeams(rnd, mIdx, bd, bs);
           const t = teams[pos] || { n: '?', f: '🏳' };
           if (!t || t.n === '?') return `<div class="bkm-team bkm-tbd"><span class="bkm-fl">🏳</span><span class="bkm-nm">Por definir</span></div>`;
           const pick = bd[sid];
@@ -4566,7 +4566,7 @@
           return `<div class="br-round"><div class="br-label ${round.col}">${round.l}</div>${mh}</div>`;
         }).join("");
       }
-      function getBrTeams(rid, idx, bd) {
+      function getBrTeams(rid, idx, bd, bs) {
         if (rid === "R32") {
           function slot(i) {
             const s = brSlots[i];
@@ -4580,8 +4580,26 @@
         if (!pr) return [];
         const s1 = `${pr}_${idx * 2}`,
           s2 = `${pr}_${idx * 2 + 1}`;
-        const w1 = bd[s1],
-          w2 = bd[s2];
+        function resolveWinner(sid) {
+          if (bd[sid]) return bd[sid];
+          // derive from scores when no explicit pick
+          if (bs && pr === 'R32') {
+            const sc = bs[sid];
+            if (sc) {
+              const h = sc.h !== null && sc.h !== undefined ? +sc.h : NaN;
+              const a = sc.a !== null && sc.a !== undefined ? +sc.a : NaN;
+              if (!isNaN(h) && !isNaN(a) && h !== a) {
+                const mIdx = parseInt(sid.split('_')[1]);
+                const t1 = brSlots[mIdx * 2], t2 = brSlots[mIdx * 2 + 1];
+                const winner = h > a ? t1 : t2;
+                if (winner && winner.n && winner.n !== '?')
+                  return `${winner.n}|${winner.f || '🏳'}`;
+              }
+            }
+          }
+          return null;
+        }
+        const w1 = resolveWinner(s1), w2 = resolveWinner(s2);
         if (!w1 && !w2) return [];
         return [
           w1
