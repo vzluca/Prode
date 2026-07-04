@@ -2147,6 +2147,9 @@
             <div id="bLockedNote" class="lnote hidden">
               ✅ Bracket guardado.
             </div>
+            <div id="bR32LockedNote" class="lnote hidden" style="background:rgba(232,53,42,0.07);color:var(--dim)">
+              🔒 Los 16avos están bloqueados. Podés completar Octavos en adelante hasta las 14:00 del 4 de julio.
+            </div>
           </div>
         </div>
 
@@ -3162,6 +3165,7 @@
       const DL_G = new Date("2026-06-24T23:59:00-03:00");
       const BR_O = new Date("2026-06-27T00:00:00-03:00");
       const BR_C = new Date("2026-06-28T15:00:00-03:00");
+      const R32_LOCK_DL = new Date("2026-07-04T14:00:00-03:00");
       const ADMIN = "admin",
         APASS = "prode2026admin";
       const FG = 2000,
@@ -3993,10 +3997,12 @@
           const joinBanner = $("bJoinBanner");
           const loginBanner = $("bLoginBanner");
           const pickDesc = $("bPickDesc");
+          const r32LkdNote = $("bR32LockedNote");
           if (!cu) {
             // no logueado → mostrar banner de login, no mostrar acciones
             act.classList.add("hidden");
             $("bLockedNote").classList.add("hidden");
+            if (r32LkdNote) r32LkdNote.classList.add("hidden");
             if (loginBanner) loginBanner.classList.remove("hidden");
             if (joinBanner) joinBanner.classList.add("hidden");
             if (pickDesc) pickDesc.style.display = "none";
@@ -4004,6 +4010,7 @@
             act.innerHTML = '<button id="aBrSaveBtn" class="bsave" style="background:var(--purple)" onclick="saveAllBrScores()">Guardar Fase Eliminatoria</button>';
             act.classList.remove("hidden");
             $("bLockedNote").classList.add("hidden");
+            if (r32LkdNote) r32LkdNote.classList.add("hidden");
             if (loginBanner) loginBanner.classList.add("hidden");
             if (joinBanner) joinBanner.classList.add("hidden");
             if (pickDesc) pickDesc.style.display = "";
@@ -4011,12 +4018,14 @@
             // logueado, ventana abierta, pero no se anotó → mostrar banner de join
             act.classList.add("hidden");
             $("bLockedNote").classList.add("hidden");
+            if (r32LkdNote) r32LkdNote.classList.add("hidden");
             if (loginBanner) loginBanner.classList.add("hidden");
             if (joinBanner) joinBanner.classList.remove("hidden");
             if (pickDesc) pickDesc.style.display = "none";
           } else if (uBL || !open) {
             act.classList.add("hidden");
             $("bLockedNote").classList.toggle("hidden", !uBL);
+            if (r32LkdNote) r32LkdNote.classList.add("hidden");
             if (loginBanner) loginBanner.classList.add("hidden");
             if (joinBanner) joinBanner.classList.add("hidden");
             if (pickDesc) pickDesc.style.display = "";
@@ -4024,6 +4033,7 @@
             // inFinal, ventana abierta, no bloqueado → puede pronosticar
             act.classList.remove("hidden");
             $("bLockedNote").classList.add("hidden");
+            if (r32LkdNote) r32LkdNote.classList.toggle("hidden", !cu.lockR32);
             if (loginBanner) loginBanner.classList.add("hidden");
             if (joinBanner) joinBanner.classList.add("hidden");
             if (pickDesc) pickDesc.style.display = "";
@@ -4137,10 +4147,12 @@
         const bd = isA ? rb : (cu && cu.bracket) || {};
         const bs = (cu && !isA && cu.bracketScores) || {};
         const lkd = cu && !isA && cu.bLocked;
+        const r32Lkd = !isA && cu && !!cu.lockR32;
+        const r32DlPassed = r32Lkd && new Date() >= R32_LOCK_DL;
         const open = isBrOpen();
         const uInF = cu && !cu.isAdmin && cu.inFinal;
-        const canPick = !lkd && open && !isA && !!uInF;
-        const canScore = !lkd && !isA && !!uInF;
+        const canPick = !lkd && !r32DlPassed && open && !isA && !!uInF;
+        const canScore = !lkd && !r32DlPassed && !isA && !!uInF;
 
         const allTeams = [];
         GK.forEach(g => GRP[g].t.forEach(t => allTeams.push(t)));
@@ -4165,8 +4177,9 @@
             const cls = isSel ? 'bkm-won' : '';
             return `<div class="bkm-team ${cls}" onclick="adminPickBr('${sid}','${tsafe}','${t.f}')"><span class="bkm-fl">${t.f}</span><span class="bkm-nm">${t.n}</span>${isSel ? '<span class="bkm-ck">✓</span>' : ''}</div>`;
           }
-          const cls = isSel ? (lkd ? 'bkm-won' : 'bkm-sel') : '';
-          const oc = canPick ? `onclick="pickBr('${sid}','${tsafe}','${t.f}')"` : '';
+          const roundLocked = lkd || (r32Lkd && rnd === 'R32');
+          const cls = isSel ? (roundLocked ? 'bkm-won' : 'bkm-sel') : '';
+          const oc = (canPick && !roundLocked) ? `onclick="pickBr('${sid}','${tsafe}','${t.f}')"` : '';
           return `<div class="bkm-team ${cls}" ${oc}><span class="bkm-fl">${t.f}</span><span class="bkm-nm">${t.n}</span>${isSel ? '<span class="bkm-ck">✓</span>' : ''}</div>`;
         }
 
@@ -4197,7 +4210,8 @@
           }
           const hv = sc.h !== undefined && sc.h !== null ? sc.h : '';
           const av = sc.a !== undefined && sc.a !== null ? sc.a : '';
-          if (canScore) {
+          const scoreRoundLocked = lkd || (r32Lkd && rnd === 'R32');
+          if (canScore && !scoreRoundLocked) {
             return `<div class="bkm-score-row">
               <input type="number" class="bkm-si" min="0" max="20" value="${hv}" placeholder="–" oninput="saveBrScore('${sid}','h',this.value)">
               <span class="bkm-vs">-</span>
@@ -4580,6 +4594,7 @@
       }
       async function pickBr(sid, name, flag) {
         if (!cu || cu.isAdmin || cu.bLocked || !isBrOpen() || !cu.inFinal) return;
+        if (cu.lockR32 && (sid.startsWith('R32_') || new Date() >= R32_LOCK_DL)) return;
         const val = `${name}|${flag}`;
         const update2 = {};
         update2[sid] = val;
@@ -4594,6 +4609,7 @@
       }
       async function saveBrScore(bid, side, val) {
         if (!cu || cu.isAdmin || cu.bLocked || !cu.inFinal) return;
+        if (cu.lockR32 && (bid.startsWith('R32_') || new Date() >= R32_LOCK_DL)) return;
         const data = {};
         data[side] = val === "" ? null : parseInt(val);
         await fbUpdate(`users/${cu.nick}/bracketScores/${bid}`, data);
