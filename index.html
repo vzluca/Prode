@@ -631,25 +631,25 @@
       /* ══════════════════════════════════════════════════════════════
          3 · BANNER CAMPEÓN
          ══════════════════════════════════════════════════════════════ */
+      /* Cinta compacta: una sola línea, discreta pero festiva */
       .champ {
         position: relative;
         z-index: 10;
         overflow: hidden;
-        padding: 26px 5vw 24px;
+        padding: 9px 5vw;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        flex-wrap: wrap;
         text-align: center;
-        background:
-          radial-gradient(
-            ellipse 60% 120% at 50% 0%,
-            rgba(0, 168, 107, 0.22),
-            transparent 70%
-          ),
-          linear-gradient(
-            90deg,
-            rgba(0, 168, 107, 0.14),
-            rgba(4, 12, 9, 0.5) 45%,
-            rgba(0, 168, 107, 0.14)
-          );
-        border-bottom: 1px solid rgba(0, 168, 107, 0.28);
+        background: linear-gradient(
+          90deg,
+          rgba(0, 168, 107, 0.13),
+          rgba(4, 12, 9, 0.4) 50%,
+          rgba(0, 168, 107, 0.13)
+        );
+        border-bottom: 1px solid rgba(0, 168, 107, 0.22);
       }
       .champ::before {
         content: "";
@@ -658,11 +658,11 @@
         background: linear-gradient(
           100deg,
           transparent 30%,
-          rgba(255, 255, 255, 0.09) 48%,
+          rgba(255, 255, 255, 0.07) 48%,
           transparent 66%
         );
         background-size: 250% 100%;
-        animation: champSheen 6.5s var(--ease-io) infinite;
+        animation: champSheen 7s var(--ease-io) infinite;
         pointer-events: none;
       }
       @keyframes champSheen {
@@ -678,24 +678,19 @@
         position: relative;
         display: inline-flex;
         align-items: center;
-        gap: 7px;
+        gap: 6px;
         font-family: "Bebas Neue", sans-serif;
-        font-size: 0.62rem;
-        letter-spacing: 4px;
+        font-size: 0.6rem;
+        letter-spacing: 2.5px;
         color: var(--lime-soft);
-        margin-bottom: 8px;
-        padding: 4px 14px;
-        border-radius: var(--r-full);
-        background: rgba(0, 168, 107, 0.12);
-        border: 1px solid rgba(0, 168, 107, 0.28);
+        white-space: nowrap;
       }
       .champ-name {
         position: relative;
         font-family: "Bebas Neue", sans-serif;
-        font-size: clamp(2.4rem, 7vw, 3.6rem);
-        letter-spacing: 5px;
+        font-size: 1.25rem;
+        letter-spacing: 3px;
         line-height: 1;
-        margin-bottom: 8px;
         background: linear-gradient(
           180deg,
           #ffffff 0%,
@@ -705,32 +700,27 @@
         -webkit-background-clip: text;
         background-clip: text;
         -webkit-text-fill-color: transparent;
-        filter: drop-shadow(0 8px 22px rgba(0, 168, 107, 0.45));
-        animation: champPop 1s var(--spring) both;
-      }
-      @keyframes champPop {
-        from {
-          opacity: 0;
-          transform: translateY(14px) scale(0.94);
-        }
-        to {
-          opacity: 1;
-          transform: none;
-        }
+        filter: drop-shadow(0 4px 12px rgba(0, 168, 107, 0.4));
       }
       .champ-txt {
         position: relative;
-        font-size: 0.8rem;
+        font-size: 0.68rem;
         color: var(--off);
         font-weight: 500;
-        line-height: 1.8;
-        max-width: 520px;
-        margin: 0 auto;
+        line-height: 1.5;
       }
       .champ-txt strong {
         color: var(--lime-soft);
       }
-      /* Papel picado */
+      .champ-sep {
+        position: relative;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: rgba(0, 168, 107, 0.5);
+        flex-shrink: 0;
+      }
+      /* Papel picado (sutil) */
       .champ-confetti {
         position: absolute;
         inset: 0;
@@ -739,24 +729,24 @@
       }
       .champ-confetti i {
         position: absolute;
-        top: -14px;
-        width: 6px;
-        height: 10px;
+        top: -12px;
+        width: 4px;
+        height: 7px;
         border-radius: 1px;
         opacity: 0;
-        animation: confettiFall 5.5s linear infinite;
+        animation: confettiFall 6s linear infinite;
       }
       @keyframes confettiFall {
         0% {
           opacity: 0;
-          transform: translateY(-10px) rotate(0deg);
+          transform: translateY(-8px) rotate(0deg);
         }
         12% {
-          opacity: 0.9;
+          opacity: 0.65;
         }
         100% {
           opacity: 0;
-          transform: translateY(180px) rotate(520deg);
+          transform: translateY(70px) rotate(520deg);
         }
       }
 
@@ -2017,6 +2007,7 @@
         overflow-y: visible;
         padding-bottom: 12px;
         -webkit-overflow-scrolling: touch;
+        container-type: inline-size;
       }
       .br-round {
         flex-shrink: 0;
@@ -2180,41 +2171,50 @@
         flex: 1;
         min-width: 0;
       }
+      /* Columnas fluidas: la llave entera entra en el ancho disponible
+         (tipografía escalada por container queries; sin scroll lateral) */
       .bkm-col {
         display: flex;
         flex-direction: column;
         flex: 1;
-        min-width: 92px;
+        min-width: 0;
       }
       .bkm-col-lbl {
         font-size: 0.48rem;
+        font-size: clamp(0.38rem, 0.75cqw, 0.48rem);
         font-weight: 900;
-        letter-spacing: 2px;
+        letter-spacing: clamp(0.6px, 0.25cqw, 2px);
         text-transform: uppercase;
         text-align: center;
         padding: 5px 0 8px;
         color: var(--dim);
         flex-shrink: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       .bkm-col-ms {
         display: flex;
         flex-direction: column;
         justify-content: space-around;
         flex: 1;
-        padding: 0 3px;
+        padding: 0 2px;
       }
       .bkt-center-col {
         display: flex;
         flex-direction: column;
         align-items: center;
         width: 118px;
+        width: clamp(84px, 13.5cqw, 118px);
         flex-shrink: 0;
-        padding: 0 6px;
+        padding: 0 4px;
+        min-width: 0;
       }
       .bkt-center-col .bkm-col-lbl {
         color: var(--gold);
         letter-spacing: 3px;
         font-size: 0.54rem;
+        font-size: clamp(0.44rem, 0.85cqw, 0.54rem);
       }
       .bkt-center-inner {
         display: flex;
@@ -2242,6 +2242,7 @@
       }
       .bkt-logo {
         width: 72px;
+        width: clamp(46px, 8.5cqw, 72px);
         height: auto;
         opacity: 0.95;
         display: block;
@@ -2278,15 +2279,16 @@
       .bkm-team {
         display: flex;
         align-items: center;
-        gap: 5px;
-        padding: 6px 7px;
+        gap: 4px;
+        padding: 5px 5px;
         font-size: 0.63rem;
+        font-size: clamp(0.5rem, 1cqw, 0.63rem);
         font-weight: 600;
         color: var(--off);
         cursor: pointer;
         border-bottom: 1px solid rgba(255, 255, 255, 0.04);
         transition: all 0.15s var(--ease);
-        min-height: 26px;
+        min-height: 24px;
       }
       .bkm-team:last-of-type {
         border-bottom: none;
@@ -2316,7 +2318,7 @@
       .bkm-team.bkm-tbd {
         color: var(--dim2);
         cursor: default;
-        font-size: 0.58rem;
+        font-size: 0.92em;
       }
       .bkm-team.bkm-tbd:hover {
         background: none;
@@ -2345,6 +2347,7 @@
       }
       .bkm-fl {
         font-size: 0.8rem;
+        font-size: clamp(0.62rem, 1.2cqw, 0.8rem);
         flex-shrink: 0;
         line-height: 1;
         filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
@@ -2365,19 +2368,21 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 5px;
-        padding: 4px 6px;
+        gap: 4px;
+        padding: 3px 4px;
         background: rgba(0, 0, 0, 0.28);
         border-bottom: 1px solid rgba(255, 255, 255, 0.03);
       }
       .bkm-si {
         width: 24px;
+        width: clamp(18px, 3.1cqw, 24px);
         height: 21px;
         background: rgba(255, 255, 255, 0.08);
         border: 1px solid var(--hair-soft);
         color: var(--white);
         font-family: "Bebas Neue", sans-serif;
         font-size: 0.84rem;
+        font-size: clamp(0.66rem, 1.15cqw, 0.84rem);
         text-align: center;
         border-radius: 5px;
         outline: none;
@@ -3359,14 +3364,21 @@
 
         /* CHAMPION */
         .champ {
-          padding: 20px 4vw;
+          padding: 8px 4vw;
+          gap: 7px;
         }
         .champ-kicker {
-          font-size: 0.55rem;
-          letter-spacing: 3px;
+          font-size: 0.52rem;
+          letter-spacing: 1.8px;
+        }
+        .champ-name {
+          font-size: 1.05rem;
+        }
+        .champ-sep {
+          display: none;
         }
         .champ-txt {
-          font-size: 0.74rem;
+          font-size: 0.62rem;
         }
 
         /* HERO */
@@ -3843,12 +3855,12 @@
     <!-- WINNER BANNER -->
     <div class="champ">
       <div class="champ-confetti" id="champConfetti" aria-hidden="true"></div>
-      <div class="champ-kicker">🏆 GANADOR DEL PRODE MUNDIAL 2026</div>
-      <div class="champ-name">Coco</div>
-      <div class="champ-txt">
-        ¡Felicitaciones! 🎉<br>
-        Gracias a todos por participar, espero se hayan divertido. ¡Hasta la próxima y <strong>AGUANTE ARGENTINA</strong>! 🇦🇷
-      </div>
+      <span class="champ-kicker">🏆 GANADOR DEL PRODE MUNDIAL 2026</span>
+      <span class="champ-name">Coco</span>
+      <span class="champ-sep"></span>
+      <span class="champ-txt">
+        ¡Felicitaciones! 🎉 Gracias a todos por participar, espero se hayan divertido. ¡Hasta la próxima y <strong>AGUANTE ARGENTINA</strong>! 🇦🇷
+      </span>
     </div>
 
     <!-- NAV -->
