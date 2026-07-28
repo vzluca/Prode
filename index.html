@@ -418,6 +418,50 @@
           opacity: 0.75;
         }
       }
+      /* Hamburguesa (solo mobile) */
+      .nburger {
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        gap: 4px;
+        width: 38px;
+        height: 38px;
+        padding: 9px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--hair-soft);
+        border-radius: 10px;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: all 0.22s var(--ease);
+      }
+      .nburger span {
+        display: block;
+        height: 2px;
+        width: 100%;
+        border-radius: 2px;
+        background: var(--off);
+        transition: all 0.3s var(--ease);
+        transform-origin: center;
+      }
+      .nburger:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+      nav.menu-open .nburger {
+        background: rgba(232, 53, 42, 0.14);
+        border-color: rgba(232, 53, 42, 0.35);
+      }
+      nav.menu-open .nburger span:nth-child(1) {
+        transform: translateY(6px) rotate(45deg);
+        background: var(--red);
+      }
+      nav.menu-open .nburger span:nth-child(2) {
+        opacity: 0;
+        transform: scaleX(0);
+      }
+      nav.menu-open .nburger span:nth-child(3) {
+        transform: translateY(-6px) rotate(-45deg);
+        background: var(--red);
+      }
       .ntabs {
         display: flex;
         height: 58px;
@@ -3313,6 +3357,72 @@
         .pot-strip {
           margin: 8px 4vw;
         }
+
+        /* NAV → menú hamburguesa: las pestañas pasan a un panel
+           desplegable debajo de la barra; nada se encima */
+        .nburger {
+          display: flex;
+        }
+        .nbrand {
+          margin-right: 12px;
+        }
+        .ntabs {
+          position: absolute;
+          top: 100%;
+          left: 0;
+          right: 0;
+          height: auto;
+          flex-direction: column;
+          overflow: visible;
+          background: linear-gradient(
+            180deg,
+            rgba(8, 8, 12, 0.98),
+            rgba(6, 6, 9, 0.96)
+          );
+          backdrop-filter: blur(24px) saturate(1.4);
+          -webkit-backdrop-filter: blur(24px) saturate(1.4);
+          border-bottom: 1px solid var(--hair-soft);
+          box-shadow: 0 24px 40px -18px rgba(0, 0, 0, 0.9);
+          padding: 6px 0 10px;
+          opacity: 0;
+          visibility: hidden;
+          pointer-events: none;
+          transform: translateY(-10px);
+          transition:
+            opacity 0.28s var(--ease),
+            transform 0.28s var(--ease),
+            visibility 0.28s;
+        }
+        nav.menu-open .ntabs {
+          opacity: 1;
+          visibility: visible;
+          pointer-events: auto;
+          transform: none;
+        }
+        .ntab {
+          width: 100%;
+          height: 48px;
+          padding: 0 6vw;
+          justify-content: flex-start;
+          font-size: 0.74rem;
+          letter-spacing: 2px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.045);
+        }
+        .ntab:last-child {
+          border-bottom: none;
+        }
+        .ntab::after {
+          display: none;
+        }
+        .ntab.active {
+          color: var(--white);
+          background: linear-gradient(
+            90deg,
+            rgba(232, 53, 42, 0.16),
+            transparent 70%
+          );
+          box-shadow: inset 3px 0 0 var(--red);
+        }
       }
       @media (max-width: 600px) {
         /* NAV */
@@ -3320,20 +3430,20 @@
           padding: 0 4vw;
           height: 52px;
         }
-        .ntabs {
-          height: 52px;
-        }
         .ntab {
-          height: 52px;
-          padding: 0 10px;
-          font-size: 0.58rem;
-          letter-spacing: 0.6px;
-          gap: 3px;
+          height: 46px;
+          padding: 0 5vw;
+          font-size: 0.7rem;
+        }
+        .nburger {
+          width: 34px;
+          height: 34px;
+          padding: 8px;
         }
         .nbrand {
           font-size: 1rem;
           letter-spacing: 3px;
-          margin-right: 12px;
+          margin-right: 10px;
         }
         .nright {
           gap: 5px;
@@ -3868,7 +3978,16 @@
       <div class="nav-line"></div>
       <div class="nav-prog" aria-hidden="true"><i id="navProg"></i></div>
       <div class="nbrand">PRODE<span class="sep"></span>26</div>
-      <div class="ntabs">
+      <button
+        class="nburger"
+        id="nburger"
+        aria-label="Abrir menú"
+        aria-expanded="false"
+        onclick="toggleMenu()"
+      >
+        <span></span><span></span><span></span>
+      </button>
+      <div class="ntabs" id="ntabs">
         <button class="ntab active" onclick="showPage('encuesta', this)">
           Grupos
         </button>
@@ -4556,6 +4675,31 @@
       })();
     </script>
 
+    <script>
+      // Menú hamburguesa — script clásico e independiente del módulo
+      // principal para que la navegación responda aunque Firebase
+      // todavía esté cargando.
+      function toggleMenu(force) {
+        var nav = document.querySelector("nav");
+        if (!nav) return;
+        var open =
+          typeof force === "boolean"
+            ? force
+            : !nav.classList.contains("menu-open");
+        nav.classList.toggle("menu-open", open);
+        var bg = document.getElementById("nburger");
+        if (bg) bg.setAttribute("aria-expanded", open ? "true" : "false");
+      }
+      document.addEventListener("click", function (e) {
+        var nav = document.querySelector("nav");
+        if (!nav || !nav.classList.contains("menu-open")) return;
+        if (e.target.closest(".ntab")) {
+          toggleMenu(false);
+          return;
+        }
+        if (!e.target.closest("nav")) toggleMenu(false);
+      });
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
