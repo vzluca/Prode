@@ -2541,58 +2541,6 @@
       .sc-h a:hover {
         color: var(--white) !important;
       }
-      .pot-side {
-        padding: 14px 17px 16px;
-      }
-      .pot-side-n {
-        font-family: "Bebas Neue", sans-serif;
-        font-size: 2.5rem;
-        line-height: 1;
-        letter-spacing: 2px;
-        background: linear-gradient(180deg, #fff, #ffe4a8);
-        -webkit-background-clip: text;
-        background-clip: text;
-        -webkit-text-fill-color: transparent;
-      }
-      .pot-side-s {
-        font-size: 0.63rem;
-        color: var(--dim);
-        font-weight: 500;
-        margin-top: 4px;
-      }
-      .pot-sp {
-        display: flex;
-        padding: 13px 17px;
-        gap: 0;
-        border-top: 1px solid var(--hair-soft);
-        background: rgba(0, 0, 0, 0.2);
-      }
-      .pot-sp div {
-        flex: 1;
-        text-align: center;
-      }
-      .pot-sp div + div {
-        border-left: 1px solid var(--hair-soft);
-      }
-      .pot-sp strong {
-        font-family: "Bebas Neue", sans-serif;
-        font-size: 1.2rem;
-        color: var(--white);
-        display: block;
-      }
-      .pot-sp strong.r {
-        color: var(--red);
-      }
-      .pot-sp strong.g {
-        color: var(--lime-soft);
-      }
-      .pot-sp span {
-        font-size: 0.54rem;
-        color: var(--dim);
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        font-weight: 800;
-      }
 
       /* ══════════════════════════════════════════════════════════════
          17 · TABLA DE POSICIONES
@@ -3430,6 +3378,20 @@
         .nburger {
           margin-left: auto;
         }
+
+        /* El bloque "MUNDIAL 2026 + Anotarme/Ya tengo cuenta" es
+           redundante en mobile: Ingresar ya está primero en el menú */
+        #loginPrompt {
+          display: none;
+        }
+        /* Avisos de fecha límite pegados al contenido de arriba */
+        .wrap {
+          padding-top: 10px;
+        }
+        .dl-banner,
+        .dl-passed {
+          margin-bottom: 12px;
+        }
         /* Sesión (Ingresar / Anotarme / usuario) dentro del menú,
            como primeras opciones — el nodo #nright se muda al drawer
            por JS en esta resolución */
@@ -3764,25 +3726,7 @@
         .sc {
           border-radius: var(--r-md);
         }
-        .pot-side {
-          padding: 11px 14px 13px;
-        }
-        .pot-side-n {
-          font-size: 2rem;
-        }
-        .pot-side-s {
-          font-size: 0.58rem;
-        }
-        .pot-sp {
-          padding: 11px 14px;
-        }
-        .pot-sp strong {
-          font-size: 1.05rem;
-        }
-        .pot-sp span {
-          font-size: 0.5rem;
-        }
-        .sc-h {
+                    .sc-h {
           padding: 13px 14px 0;
           font-size: 0.54rem;
         }
@@ -4347,22 +4291,6 @@
 
       <!-- ASIDE -->
       <div class="aside">
-        <div class="sc">
-          <div class="sc-h"><span>Pozo del torneo</span></div>
-          <div class="pot-side">
-            <div class="pot-side-n" id="sPot">$–</div>
-            <div class="pot-side-s" id="sPotSub">Cargando...</div>
-          </div>
-          <div class="pot-sp">
-            <div>
-              <strong class="r" id="sGrupos">$–</strong><span>Grupos</span>
-            </div>
-            <div>
-              <strong class="g" id="sFinal">$–</strong><span>Fase final</span>
-            </div>
-          </div>
-        </div>
-
         <div class="sc">
           <div class="sc-h">
             <span
@@ -6167,10 +6095,6 @@
         if ($("sFinal2")) $("sFinal2").textContent = fmt(fn * FF);
         $("potBreak").textContent =
           `${n} × $${FG.toLocaleString()} + ${fn} × $${FF.toLocaleString()} fase final`;
-        $("sPot").textContent = fmt(pot);
-        $("sPotSub").textContent = `${n} jugadores inscriptos`;
-        $("sGrupos").textContent = fmt(n * FG);
-        $("sFinal").textContent = fmt(fn * FF);
         renderLB();
         renderAdminFinalList();
       }
