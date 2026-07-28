@@ -2296,6 +2296,9 @@
       }
       /* Tarjeta de la Final: tratamiento dorado */
       .bkt-center-inner .bkm-match {
+        width: 100%;
+        min-width: 0;
+        align-self: stretch;
         border-color: rgba(246, 180, 14, 0.35);
         box-shadow:
           0 0 0 1px rgba(246, 180, 14, 0.1),
@@ -3423,6 +3426,88 @@
           );
           box-shadow: inset 3px 0 0 var(--red);
         }
+        /* Hamburguesa al margen derecho */
+        .nburger {
+          margin-left: auto;
+        }
+        /* Sesión (Ingresar / Anotarme / usuario) dentro del menú,
+           como primeras opciones — el nodo #nright se muda al drawer
+           por JS en esta resolución */
+        .ntabs .nright {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 8px;
+          margin-left: 0;
+          padding: 14px 6vw 12px;
+          border-bottom: 1px solid var(--hair-soft);
+        }
+        .ntabs .nright .btn-ghost,
+        .ntabs .nright .btn-cta {
+          width: 100%;
+          padding: 12px;
+          font-size: 0.74rem;
+          letter-spacing: 1.5px;
+          border-radius: 12px;
+          text-align: center;
+        }
+        .ntabs .nright .upill {
+          justify-content: center;
+          padding: 9px 12px;
+          border-radius: 12px;
+        }
+        .ntabs .nright .btn-out,
+        .ntabs .nright .btn-signout {
+          width: 100%;
+          padding: 11px;
+          font-size: 0.7rem;
+          background: rgba(255, 255, 255, 0.045);
+          border: 1px solid var(--hair-soft);
+          border-radius: 12px;
+        }
+
+        /* BRACKET: en pantallas angostas vuelve el scroll lateral con
+           tarjetas cómodas — encajar 9 columnas legibles acá es imposible.
+           width:max-content evita que las mitades se compriman y las
+           columnas se encimen entre sí */
+        .bkt-root {
+          min-height: 540px;
+          width: max-content;
+          min-width: 100%;
+        }
+        .bkt-half {
+          flex: 0 0 auto;
+        }
+        .bkm-col {
+          min-width: 88px;
+        }
+        .bkt-center-col {
+          width: 100px;
+        }
+        .bkt-logo {
+          width: 54px;
+        }
+        .bkm-team {
+          font-size: 0.6rem;
+          padding: 5px 5px;
+          min-height: 23px;
+          gap: 3px;
+        }
+        .bkm-fl {
+          font-size: 0.72rem;
+        }
+        .bkm-si {
+          width: 21px;
+          height: 19px;
+          font-size: 0.76rem;
+        }
+        .bkm-col-lbl {
+          font-size: 0.44rem;
+          letter-spacing: 1.2px;
+        }
+        .bkt-center-inner::before {
+          width: 130px;
+          height: 130px;
+        }
       }
       @media (max-width: 600px) {
         /* NAV */
@@ -3865,41 +3950,7 @@
           font-size: 0.56rem;
         }
 
-        /* BRACKET V2 */
-        .bkt-root {
-          min-height: 500px;
-        }
-        .bkm-col {
-          min-width: 70px;
-        }
-        .bkt-center-col {
-          width: 78px;
-        }
-        .bkt-logo {
-          width: 48px;
-        }
-        .bkm-team {
-          font-size: 0.54rem;
-          padding: 5px 4px;
-          min-height: 22px;
-          gap: 2px;
-        }
-        .bkm-fl {
-          font-size: 0.68rem;
-        }
-        .bkm-si {
-          width: 19px;
-          height: 18px;
-          font-size: 0.72rem;
-        }
-        .bkm-col-lbl {
-          font-size: 0.42rem;
-          letter-spacing: 1px;
-        }
-        .bkt-center-inner::before {
-          width: 120px;
-          height: 120px;
-        }
+        /* BRACKET V2: hereda las reglas de scroll del bloque de 760px */
       }
       @media (max-width: 600px) {
         .clasi-grid {
@@ -4693,12 +4744,36 @@
       document.addEventListener("click", function (e) {
         var nav = document.querySelector("nav");
         if (!nav || !nav.classList.contains("menu-open")) return;
-        if (e.target.closest(".ntab")) {
+        if (
+          e.target.closest(".ntab") ||
+          e.target.closest(".ntabs .nright button")
+        ) {
           toggleMenu(false);
           return;
         }
         if (!e.target.closest("nav")) toggleMenu(false);
       });
+      // En mobile, la sesión (#nright) vive dentro del drawer como
+      // primeras opciones; en desktop vuelve a la barra. Se muda el
+      // nodo real, así las reescrituras de innerHTML siguen andando.
+      (function () {
+        var mq = window.matchMedia("(max-width: 760px)");
+        function placeNright() {
+          var nright = document.getElementById("nright");
+          var ntabs = document.getElementById("ntabs");
+          var nav = document.querySelector("nav");
+          if (!nright || !ntabs || !nav) return;
+          if (mq.matches) {
+            if (nright.parentElement !== ntabs)
+              ntabs.insertBefore(nright, ntabs.firstChild);
+          } else if (nright.parentElement !== nav) {
+            nav.appendChild(nright);
+          }
+        }
+        if (mq.addEventListener) mq.addEventListener("change", placeNright);
+        else if (mq.addListener) mq.addListener(placeNright);
+        placeNright();
+      })();
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script type="module">
