@@ -1361,6 +1361,24 @@
         gap: 26px;
         align-items: start;
       }
+      /* Sin panel lateral (Fase Final, Posiciones, Clasificados): el
+         contenido toma todo el ancho */
+      .wrap.no-aside {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .wrap.no-aside .aside {
+        display: none;
+      }
+      /* En la portada, la tabla lateral acompaña al alto del bloque de
+         bienvenida para que ambos terminen a la misma altura */
+      @media (min-width: 981px) {
+        .wrap:has(#loginPrompt:not(.hidden)) .aside {
+          align-self: stretch;
+        }
+        .wrap:has(#loginPrompt:not(.hidden)) #sideCard {
+          flex: 1 1 auto;
+        }
+      }
       @media (max-width: 980px) {
         .wrap {
           grid-template-columns: 1fr;
@@ -4449,7 +4467,7 @@
 
       <!-- ASIDE -->
       <div class="aside">
-        <div class="sc">
+        <div class="sc" id="sideCard">
           <div class="sc-h">
             <span
               ><span
@@ -5615,7 +5633,8 @@
         brSlots = {},
         afForce = null;
       let cu = null,
-        cg = "A";
+        cg = "A",
+        curPage = "encuesta";
 
       function $(x) {
         return document.getElementById(x);
@@ -5827,12 +5846,14 @@
         if (!cu) {
           nr.innerHTML = `<button class="btn-ghost" onclick="openModal('login')">Ingresar</button><button class="btn-cta" onclick="openModal('register')">Anotarme</button>`;
           $("adminC").classList.add("hidden");
+          syncAside();
           return;
         }
         const ini = cu.nick.substring(0, 2).toUpperCase();
         const bg = cu.isAdmin ? "#5a3fd4" : AVCOLS[0];
         nr.innerHTML = `<div class="upill"><div class="uav" style="background:${bg};color:#fff">${ini}</div><span class="upill-nick">${cu.nick}</span>${cu.isAdmin ? "<span class='badge-admin'>ADMIN</span>" : ""}</div><button class="btn-signout" onclick="doLogout()">Salir</button>`;
         $("adminC").classList.toggle("hidden", !cu.isAdmin);
+        syncAside();
         if (cu.isAdmin) { renderAdminGrpSel(); }
         updateFinStatus();
       }
@@ -7283,6 +7304,7 @@
         if (e.target === $("mbg")) closeModal();
       }
       function showPage(p, btn) {
+        curPage = p;
         document
           .querySelectorAll(".spage")
           .forEach((el) => el.classList.remove("active"));
@@ -7296,10 +7318,25 @@
         if (ts)
           ts.style.display =
             p === "eliminacion" || p === "posiciones" || p === "clasificados" || cu ? "none" : "";
+        syncAside(p);
         if (p === "eliminacion") renderBracket();
         if (p === "posiciones") renderLB();
         if (p === "clasificados") renderClasificados();
         if (p === "encuesta" && cu && !cu.isAdmin) renderSurvey();
+      }
+      // El panel lateral de Posiciones solo acompaña a la pestaña de
+      // Grupos: en Posiciones duplicaría la tabla grande, y en Fase
+      // Final y Clasificados le roba lugar al contenido. El panel de
+      // admin sigue disponible en todas.
+      function syncAside(p = curPage) {
+        const side = $("sideCard"),
+          adminBox = $("adminC"),
+          wrap = document.querySelector(".wrap");
+        if (!wrap) return;
+        const showSide = p === "encuesta";
+        if (side) side.classList.toggle("hidden", !showSide);
+        const adminOn = adminBox && !adminBox.classList.contains("hidden");
+        wrap.classList.toggle("no-aside", !showSide && !adminOn);
       }
       function tick() {
         const now = new Date(),
