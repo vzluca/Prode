@@ -99,6 +99,11 @@
         background: var(--bg);
         color: var(--white);
         min-height: 100vh;
+        min-height: 100dvh;
+        /* Columna flexible para que el pie quede siempre abajo de todo,
+           aunque la página tenga poco contenido */
+        display: flex;
+        flex-direction: column;
         overflow-x: hidden;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
@@ -3307,6 +3312,9 @@
           transform: none;
         }
       }
+      footer {
+        margin-top: auto;
+      }
       footer a:hover {
         text-decoration: underline !important;
       }
@@ -4824,6 +4832,7 @@
       type="button"
       aria-pressed="false"
       aria-label="Activar música de fondo"
+      title="Shakira · Die Die"
     >
       <span class="m-ico" id="musicIco">🎵</span>
       <span class="m-eq" aria-hidden="true"><i></i><i></i><i></i></span>
@@ -4832,17 +4841,21 @@
     <div id="musicHost"></div>
 
     <script>
-      // Música de fondo (YouTube). Los navegadores bloquean el audio
-      // automático sin una interacción previa, así que arranca en el
-      // primer clic/toque y la preferencia queda guardada.
+      // Música de fondo (YouTube · Shakira "Die Die").
+      // Se intenta arrancar sola al cargar; si el navegador bloquea el
+      // audio automático —lo hacen todos salvo que el visitante ya haya
+      // reproducido audio seguido en el sitio— suena en el primer
+      // toque/tecla. La preferencia de apagado queda guardada.
       (function () {
         var VIDEO = "X9CsK_nuqdE";
+        var CREDIT = "Shakira · Die Die";
         var btn = document.getElementById("musicBtn");
         var host = document.getElementById("musicHost");
         var ico = document.getElementById("musicIco");
         var txt = document.getElementById("musicTxt");
         if (!btn || !host) return;
-        var playing = false;
+        var wanted = false; // queremos que suene
+        var live = false; // el reproductor confirmó que está sonando
 
         function store(v) {
           try {
@@ -4856,53 +4869,93 @@
             return null;
           }
         }
+        function paint() {
+          var on = wanted;
+          btn.classList.toggle("on", on);
+          btn.setAttribute("aria-pressed", on ? "true" : "false");
+          btn.setAttribute(
+            "aria-label",
+            on ? "Silenciar música de fondo" : "Activar música de fondo"
+          );
+          ico.textContent = on ? "🔊" : "🎵";
+          txt.textContent = on ? CREDIT : "Música";
+        }
+        function mount() {
+          host.innerHTML =
+            '<iframe class="music-frame" title="' +
+            CREDIT +
+            '" allow="autoplay" src="https://www.youtube-nocookie.com/embed/' +
+            VIDEO +
+            "?autoplay=1&loop=1&playlist=" +
+            VIDEO +
+            '&controls=0&modestbranding=1&playsinline=1&enablejsapi=1"></iframe>';
+        }
         function disarm() {
           document.removeEventListener("pointerdown", arm);
           document.removeEventListener("keydown", arm);
+          document.removeEventListener("touchstart", arm);
+        }
+        function armListeners() {
+          document.addEventListener("pointerdown", arm);
+          document.addEventListener("keydown", arm);
+          document.addEventListener("touchstart", arm);
         }
         function arm(e) {
           // Si el gesto fue sobre el botón, que lo maneje el botón
           if (e && e.target && e.target.closest && e.target.closest("#musicBtn"))
             return;
           disarm();
-          play();
+          if (live) return; // el intento automático ya prendió
+          // El gesto habilita el audio: se rearma el reproductor y el
+          // botón pasa a "sonando" sin depender del aviso de YouTube
+          wanted = true;
+          paint();
+          mount();
         }
         function play() {
-          if (playing) return;
-          disarm();
-          host.innerHTML =
-            '<iframe class="music-frame" title="Música de fondo" allow="autoplay" src="https://www.youtube-nocookie.com/embed/' +
-            VIDEO +
-            "?autoplay=1&loop=1&playlist=" +
-            VIDEO +
-            '&controls=0&modestbranding=1&playsinline=1"></iframe>';
-          playing = true;
-          btn.classList.add("on");
-          btn.setAttribute("aria-pressed", "true");
-          btn.setAttribute("aria-label", "Silenciar música de fondo");
-          ico.textContent = "🔊";
-          txt.textContent = "Sonando";
+          wanted = true;
           store("on");
+          paint();
+          mount();
+          disarm();
         }
         function stop() {
-          disarm();
-          host.innerHTML = "";
-          playing = false;
-          btn.classList.remove("on");
-          btn.setAttribute("aria-pressed", "false");
-          btn.setAttribute("aria-label", "Activar música de fondo");
-          ico.textContent = "🎵";
-          txt.textContent = "Música";
+          wanted = false;
+          live = false;
           store("off");
+          paint();
+          host.innerHTML = "";
+          disarm();
         }
         btn.addEventListener("click", function () {
-          playing ? stop() : play();
+          wanted ? stop() : play();
         });
 
-        // Salvo que la hayan apagado antes, suena apenas tocan la página
+        // El reproductor avisa cuando realmente está sonando
+        window.addEventListener("message", function (e) {
+          if (!/youtube(-nocookie)?\.com$/.test(String(e.origin).replace(/^https?:\/\//, "")))
+            return;
+          var d;
+          try {
+            d = typeof e.data === "string" ? JSON.parse(e.data) : e.data;
+          } catch (_) {
+            return;
+          }
+          if (d && d.info && d.info.playerState === 1) {
+            live = true;
+            if (!wanted) {
+              wanted = true;
+              paint();
+            }
+            disarm();
+          }
+        });
+
+        // Arranque: salvo que la hayan apagado antes, se intenta sola y
+        // queda armado el respaldo por si el navegador la bloquea
         if (stored() !== "off") {
-          document.addEventListener("pointerdown", arm);
-          document.addEventListener("keydown", arm);
+          mount();
+          armListeners();
         }
       })();
     </script>
@@ -6316,7 +6369,7 @@
         const page = $("clasiContent");
         if (!page) return;
         if (!cu || cu.isAdmin) {
-          page.innerHTML = `<div style="padding:60px 0;text-align:center"><div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(2.5rem,7vw,5rem);line-height:0.9;margin-bottom:14px">CLASIFI<br><span style="color:var(--lime)">CADOS</span></div><p style="color:var(--dim);font-size:0.82rem;margin-bottom:20px">Ingresá para ver tu tabla proyectada de clasificados.</p><button class="btn-hero" onclick="openModal('login')">Ingresar</button></div>`;
+          page.innerHTML = `<div style="padding:60px 0;text-align:center"><div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(2.5rem,7vw,5rem);line-height:0.9;margin-bottom:14px">CLASIFICADOS</div><p style="color:var(--dim);font-size:0.82rem;margin-bottom:20px">Ingresá para ver tu tabla proyectada de clasificados.</p><button class="btn-hero" onclick="openModal('login')">Ingresar</button></div>`;
           return;
         }
         // Compute standings for all groups
