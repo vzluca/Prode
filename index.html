@@ -3912,7 +3912,115 @@
       }
 
       /* ══════════════════════════════════════════════════════════════
-         25 · ACCESIBILIDAD · MOVIMIENTO REDUCIDO
+         25 · ESTABILIDAD EN MOBILE
+         Los GPU de teléfono no sostienen texto recortado con degradé
+         animado, blur de fondo ni capas gigantes repintándose: eso hacía
+         que el banner perdiera el color o el texto por instantes. En
+         pantallas táctiles se usan versiones sólidas y sin blur.
+         ══════════════════════════════════════════════════════════════ */
+      @media (max-width: 760px), (hover: none) {
+        /* 1 · Texto con degradé recortado → color sólido (sin parpadeo) */
+        h1,
+        .champ-name,
+        .pot-amt,
+        .fl-big {
+          background: none;
+          -webkit-background-clip: border-box;
+          background-clip: border-box;
+          -webkit-text-fill-color: currentColor;
+          animation: none;
+        }
+        h1 {
+          color: var(--white);
+          filter: none;
+          text-shadow: 0 10px 24px rgba(0, 0, 0, 0.6);
+        }
+        .champ-name {
+          color: var(--white);
+          filter: none;
+        }
+        .pot-amt {
+          color: #ffe9b0;
+        }
+        .fl-big {
+          color: var(--red);
+          filter: none;
+        }
+
+        /* 2 · Sin blur de fondo: se reemplaza por fondos opacos */
+        nav {
+          background: rgba(6, 6, 9, 0.97);
+          backdrop-filter: none;
+          -webkit-backdrop-filter: none;
+        }
+        .ntabs {
+          backdrop-filter: none;
+          -webkit-backdrop-filter: none;
+          background: #0a0a0e;
+        }
+        .card,
+        .bracket-wrap,
+        .sc,
+        .clasi-card,
+        .final-locked,
+        .modal,
+        .hero-tag,
+        .btn-hero-o {
+          backdrop-filter: none;
+          -webkit-backdrop-filter: none;
+        }
+        .mbg {
+          backdrop-filter: none;
+          -webkit-backdrop-filter: none;
+          background: rgba(2, 2, 4, 0.92);
+        }
+        .modal {
+          background: #14141a;
+        }
+
+        /* 3 · Sin capas gigantes ni destellos repintando sin parar */
+        .bg-grain {
+          display: none;
+        }
+        .champ::before {
+          animation: none;
+          background: none;
+        }
+        .btn-cta::after,
+        .btn-hero::after,
+        .bsave::after,
+        .pbf::after {
+          display: none;
+        }
+        .bg-stripes {
+          animation: none;
+        }
+        /* Los orbes con blur de 60px y la cancha animada repintan el
+           fondo entero en cada cuadro: quedan quietos en mobile */
+        .bg-orb.o1,
+        .bg-orb.o2,
+        .bg-orb.o3 {
+          animation: none;
+          filter: blur(46px);
+        }
+        .bg-pitch-grid {
+          animation: none;
+        }
+        /* Degradé recortado en línea dentro del modal de promo */
+        #mPromoFinal [style*="text-fill-color"] {
+          background: none !important;
+          -webkit-text-fill-color: var(--red) !important;
+        }
+
+        /* 4 · Alto reservado: al cargar la tipografía el banner ya no
+           empuja el resto de la página */
+        .champ {
+          min-height: 64px;
+        }
+      }
+
+      /* ══════════════════════════════════════════════════════════════
+         26 · ACCESIBILIDAD · MOVIMIENTO REDUCIDO
          ══════════════════════════════════════════════════════════════ */
       @media (prefers-reduced-motion: reduce) {
         html {
@@ -4003,6 +4111,56 @@
         </button>
       </div>
     </nav>
+
+    <script>
+      // Menú hamburguesa — script clásico e independiente del módulo
+      // principal para que la navegación responda aunque Firebase
+      // todavía esté cargando.
+      function toggleMenu(force) {
+        var nav = document.querySelector("nav");
+        if (!nav) return;
+        var open =
+          typeof force === "boolean"
+            ? force
+            : !nav.classList.contains("menu-open");
+        nav.classList.toggle("menu-open", open);
+        var bg = document.getElementById("nburger");
+        if (bg) bg.setAttribute("aria-expanded", open ? "true" : "false");
+      }
+      document.addEventListener("click", function (e) {
+        var nav = document.querySelector("nav");
+        if (!nav || !nav.classList.contains("menu-open")) return;
+        if (
+          e.target.closest(".ntab") ||
+          e.target.closest(".ntabs .nright button")
+        ) {
+          toggleMenu(false);
+          return;
+        }
+        if (!e.target.closest("nav")) toggleMenu(false);
+      });
+      // En mobile, la sesión (#nright) vive dentro del drawer como
+      // primeras opciones; en desktop vuelve a la barra. Se muda el
+      // nodo real, así las reescrituras de innerHTML siguen andando.
+      (function () {
+        var mq = window.matchMedia("(max-width: 760px)");
+        function placeNright() {
+          var nright = document.getElementById("nright");
+          var ntabs = document.getElementById("ntabs");
+          var nav = document.querySelector("nav");
+          if (!nright || !ntabs || !nav) return;
+          if (mq.matches) {
+            if (nright.parentElement !== ntabs)
+              ntabs.insertBefore(nright, ntabs.firstChild);
+          } else if (nright.parentElement !== nav) {
+            nav.appendChild(nright);
+          }
+        }
+        if (mq.addEventListener) mq.addEventListener("change", placeNright);
+        else if (mq.addListener) mq.addListener(placeNright);
+        placeNright();
+      })();
+    </script>
 
     <div id="topSection">
       <!-- HERO -->
@@ -4654,55 +4812,6 @@
       })();
     </script>
 
-    <script>
-      // Menú hamburguesa — script clásico e independiente del módulo
-      // principal para que la navegación responda aunque Firebase
-      // todavía esté cargando.
-      function toggleMenu(force) {
-        var nav = document.querySelector("nav");
-        if (!nav) return;
-        var open =
-          typeof force === "boolean"
-            ? force
-            : !nav.classList.contains("menu-open");
-        nav.classList.toggle("menu-open", open);
-        var bg = document.getElementById("nburger");
-        if (bg) bg.setAttribute("aria-expanded", open ? "true" : "false");
-      }
-      document.addEventListener("click", function (e) {
-        var nav = document.querySelector("nav");
-        if (!nav || !nav.classList.contains("menu-open")) return;
-        if (
-          e.target.closest(".ntab") ||
-          e.target.closest(".ntabs .nright button")
-        ) {
-          toggleMenu(false);
-          return;
-        }
-        if (!e.target.closest("nav")) toggleMenu(false);
-      });
-      // En mobile, la sesión (#nright) vive dentro del drawer como
-      // primeras opciones; en desktop vuelve a la barra. Se muda el
-      // nodo real, así las reescrituras de innerHTML siguen andando.
-      (function () {
-        var mq = window.matchMedia("(max-width: 760px)");
-        function placeNright() {
-          var nright = document.getElementById("nright");
-          var ntabs = document.getElementById("ntabs");
-          var nav = document.querySelector("nav");
-          if (!nright || !ntabs || !nav) return;
-          if (mq.matches) {
-            if (nright.parentElement !== ntabs)
-              ntabs.insertBefore(nright, ntabs.firstChild);
-          } else if (nright.parentElement !== nav) {
-            nav.appendChild(nright);
-          }
-        }
-        if (mq.addEventListener) mq.addEventListener("change", placeNright);
-        else if (mq.addListener) mq.addListener(placeNright);
-        placeNright();
-      })();
-    </script>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
