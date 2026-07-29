@@ -1377,6 +1377,9 @@
       .wrap {
         position: relative;
         z-index: 1;
+        /* width:100% es necesario: como el body es flex, los márgenes
+           automáticos impiden que el elemento se estire solo */
+        width: 100%;
         max-width: 1240px;
         margin: 0 auto;
         padding: 26px 5vw 72px;
@@ -1668,7 +1671,12 @@
       }
       .mrow {
         display: grid;
-        grid-template-columns: 1fr 42px 16px 42px 1fr 38px;
+        /* Las columnas de equipo se topan para que en pantallas anchas
+           el marcador no quede desparramado; al ser iguales en todas las
+           filas, los casilleros siguen alineados entre sí */
+        grid-template-columns:
+          minmax(0, 300px) 42px 16px 42px minmax(0, 300px) 38px;
+        justify-content: center;
         align-items: center;
         gap: 6px;
         padding: 8px 10px;
@@ -1687,18 +1695,22 @@
       .mrow.lk {
         opacity: 0.82;
       }
+      /* Cada equipo se apoya contra su propio casillero de resultado */
       .mt {
         display: flex;
         align-items: center;
+        justify-content: flex-end;
         gap: 8px;
         font-size: 0.79rem;
         font-weight: 600;
         color: var(--off);
         min-width: 0;
+        text-align: right;
       }
       .mt.r {
         justify-content: flex-end;
         flex-direction: row-reverse;
+        text-align: left;
       }
       .mfl {
         font-size: 1rem;
