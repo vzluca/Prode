@@ -381,8 +381,19 @@
         display: block;
         height: 100%;
         width: 0%;
-        background: linear-gradient(90deg, var(--red), var(--gold));
-        box-shadow: 0 0 12px rgba(232, 53, 42, 0.7);
+        background: linear-gradient(
+          90deg,
+          var(--red) 0%,
+          #ff6a5f 22%,
+          var(--purple) 50%,
+          #2f8fd8 68%,
+          var(--lime) 100%
+        );
+        /* El degradé mide todo el ancho de la pantalla: al scrollear se
+           va revelando rojo → azul → verde en vez de comprimirse */
+        background-size: 100vw 100%;
+        background-repeat: no-repeat;
+        box-shadow: 0 0 12px rgba(0, 87, 184, 0.55);
         border-radius: 0 2px 2px 0;
         transition: width 0.12s linear;
       }
@@ -3931,6 +3942,108 @@
       }
 
       /* ══════════════════════════════════════════════════════════════
+         24b · MÚSICA DE FONDO
+         ══════════════════════════════════════════════════════════════ */
+      .music-btn {
+        position: fixed;
+        right: 18px;
+        bottom: 18px;
+        z-index: 300;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px 10px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: var(--r-full);
+        background: linear-gradient(
+          150deg,
+          rgba(20, 20, 26, 0.94),
+          rgba(10, 10, 14, 0.94)
+        );
+        color: var(--off);
+        font-size: 0.64rem;
+        font-weight: 800;
+        letter-spacing: 1.4px;
+        text-transform: uppercase;
+        cursor: pointer;
+        box-shadow: var(--sh-md);
+        transition: all 0.25s var(--ease);
+      }
+      .music-btn:hover {
+        color: var(--white);
+        border-color: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+      }
+      .music-btn .m-ico {
+        font-size: 0.9rem;
+        line-height: 1;
+      }
+      /* Ecualizador: solo se mueve cuando suena */
+      .music-btn .m-eq {
+        display: none;
+        align-items: flex-end;
+        gap: 2px;
+        height: 12px;
+      }
+      .music-btn.on .m-eq {
+        display: flex;
+      }
+      .music-btn.on {
+        color: var(--white);
+        border-color: rgba(0, 168, 107, 0.45);
+        box-shadow:
+          var(--sh-md),
+          0 0 20px -6px rgba(0, 168, 107, 0.7);
+      }
+      .music-btn .m-eq i {
+        display: block;
+        width: 2.5px;
+        border-radius: 2px;
+        background: linear-gradient(180deg, var(--lime-soft), var(--lime));
+        animation: eqBar 0.9s var(--ease-io) infinite;
+      }
+      .music-btn .m-eq i:nth-child(1) {
+        height: 60%;
+        animation-delay: -0.1s;
+      }
+      .music-btn .m-eq i:nth-child(2) {
+        height: 100%;
+        animation-delay: -0.45s;
+      }
+      .music-btn .m-eq i:nth-child(3) {
+        height: 45%;
+        animation-delay: -0.7s;
+      }
+      @keyframes eqBar {
+        0%,
+        100% {
+          transform: scaleY(0.4);
+        }
+        50% {
+          transform: scaleY(1);
+        }
+      }
+      .music-frame {
+        position: fixed;
+        left: -9999px;
+        bottom: 0;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        pointer-events: none;
+        border: 0;
+      }
+      @media (max-width: 600px) {
+        .music-btn {
+          right: 12px;
+          bottom: 12px;
+          padding: 9px 13px 9px 10px;
+          font-size: 0.58rem;
+          letter-spacing: 1px;
+        }
+      }
+
+      /* ══════════════════════════════════════════════════════════════
          25 · ESTABILIDAD EN MOBILE
          Los GPU de teléfono no sostienen texto recortado con degradé
          animado, blur de fondo ni capas gigantes repintándose: eso hacía
@@ -4694,14 +4807,105 @@
         letter-spacing: 1px;
       "
     >
-      PRODE MUNDIAL 2026 · PRIVADO · 11 JUN – 19 JUL ·
+      PRODE MUNDIAL 2026 · PRIVADO · 11 JUN – 19 JUL · Web realizada por
       <a
-        href="https://www.fifa.com"
+        href="https://www.redlabs.digital"
         target="_blank"
-        style="color: var(--red); text-decoration: none"
-        >FIFA.COM</a
+        rel="noopener"
+        style="color: var(--red); text-decoration: none; font-weight: 800"
+        >REDLABS</a
       >
     </footer>
+
+    <!-- MÚSICA DE FONDO -->
+    <button
+      class="music-btn"
+      id="musicBtn"
+      type="button"
+      aria-pressed="false"
+      aria-label="Activar música de fondo"
+    >
+      <span class="m-ico" id="musicIco">🎵</span>
+      <span class="m-eq" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span id="musicTxt">Música</span>
+    </button>
+    <div id="musicHost"></div>
+
+    <script>
+      // Música de fondo (YouTube). Los navegadores bloquean el audio
+      // automático sin una interacción previa, así que arranca en el
+      // primer clic/toque y la preferencia queda guardada.
+      (function () {
+        var VIDEO = "X9CsK_nuqdE";
+        var btn = document.getElementById("musicBtn");
+        var host = document.getElementById("musicHost");
+        var ico = document.getElementById("musicIco");
+        var txt = document.getElementById("musicTxt");
+        if (!btn || !host) return;
+        var playing = false;
+
+        function store(v) {
+          try {
+            localStorage.setItem("prodeMusic", v);
+          } catch (e) {}
+        }
+        function stored() {
+          try {
+            return localStorage.getItem("prodeMusic");
+          } catch (e) {
+            return null;
+          }
+        }
+        function disarm() {
+          document.removeEventListener("pointerdown", arm);
+          document.removeEventListener("keydown", arm);
+        }
+        function arm(e) {
+          // Si el gesto fue sobre el botón, que lo maneje el botón
+          if (e && e.target && e.target.closest && e.target.closest("#musicBtn"))
+            return;
+          disarm();
+          play();
+        }
+        function play() {
+          if (playing) return;
+          disarm();
+          host.innerHTML =
+            '<iframe class="music-frame" title="Música de fondo" allow="autoplay" src="https://www.youtube-nocookie.com/embed/' +
+            VIDEO +
+            "?autoplay=1&loop=1&playlist=" +
+            VIDEO +
+            '&controls=0&modestbranding=1&playsinline=1"></iframe>';
+          playing = true;
+          btn.classList.add("on");
+          btn.setAttribute("aria-pressed", "true");
+          btn.setAttribute("aria-label", "Silenciar música de fondo");
+          ico.textContent = "🔊";
+          txt.textContent = "Sonando";
+          store("on");
+        }
+        function stop() {
+          disarm();
+          host.innerHTML = "";
+          playing = false;
+          btn.classList.remove("on");
+          btn.setAttribute("aria-pressed", "false");
+          btn.setAttribute("aria-label", "Activar música de fondo");
+          ico.textContent = "🎵";
+          txt.textContent = "Música";
+          store("off");
+        }
+        btn.addEventListener("click", function () {
+          playing ? stop() : play();
+        });
+
+        // Salvo que la hayan apagado antes, suena apenas tocan la página
+        if (stored() !== "off") {
+          document.addEventListener("pointerdown", arm);
+          document.addEventListener("keydown", arm);
+        }
+      })();
+    </script>
 
     <!-- ══ CAPA VISUAL · efectos 3D e interacciones (no toca la lógica) ══ -->
     <script>
