@@ -414,6 +414,14 @@
         flex-shrink: 0;
         color: var(--white);
         text-shadow: 0 2px 12px rgba(232, 53, 42, 0.35);
+        background: none;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        transition: opacity 0.2s var(--ease);
+      }
+      .nbrand:hover {
+        opacity: 0.75;
       }
       .nbrand .sep {
         width: 6px;
@@ -4220,7 +4228,14 @@
     <nav>
       <div class="nav-line"></div>
       <div class="nav-prog" aria-hidden="true"><i id="navProg"></i></div>
-      <div class="nbrand">PRODE<span class="sep"></span>26</div>
+      <button
+        class="nbrand"
+        type="button"
+        onclick="goHome()"
+        aria-label="Ir al inicio"
+      >
+        PRODE<span class="sep"></span>26
+      </button>
       <button
         class="nburger"
         id="nburger"
@@ -4231,7 +4246,14 @@
         <span></span><span></span><span></span>
       </button>
       <div class="ntabs" id="ntabs">
-        <button class="ntab active" onclick="showPage('encuesta', this)">
+        <button
+          class="ntab active"
+          id="tabInicio"
+          onclick="showPage('inicio', this)"
+        >
+          Inicio
+        </button>
+        <button class="ntab" id="tabGrupos" onclick="showPage('encuesta', this)">
           Grupos
         </button>
         <button class="ntab" onclick="showPage('eliminacion', this)">
@@ -4405,10 +4427,10 @@
     <!-- /topSection -->
 
     <!-- MAIN -->
-    <div class="wrap">
+    <div class="wrap" style="display: none">
       <div>
         <!-- ENCUESTA -->
-        <div class="spage active" id="pageEncuesta">
+        <div class="spage" id="pageEncuesta">
           <div id="dlBanner" class="dl-banner">
             <span class="live-dot"></span>
             <span
@@ -6085,6 +6107,8 @@
         renderSurvey();
         renderBracket();
         updateStats();
+        // Al entrar se va directo a cargar pronósticos
+        showPage("encuesta", $("tabGrupos"));
       }
       function doLogout() {
         cu = null;
@@ -6092,15 +6116,15 @@
         $("loginPrompt").classList.remove("hidden");
         $("surveyPanel").classList.add("hidden");
         $("adminC").classList.add("hidden");
-        const ts = $("topSection");
-        if (ts) ts.style.display = "";
+        goHome();
         renderBracket();
         updateStats();
       }
       function updateNav() {
         const nr = $("nright");
+        // La portada se muestra según la pestaña, no según la sesión;
+        // solo los botones de alta/ingreso dependen de estar logueado
         $("heroCtas").classList.toggle("hidden", !!cu);
-        $("topSection").classList.toggle("hidden", !!cu);
         if (!cu) {
           nr.innerHTML = `<button class="btn-ghost" onclick="openModal('login')">Ingresar</button><button class="btn-cta" onclick="openModal('register')">Anotarme</button>`;
           $("adminC").classList.add("hidden");
@@ -7572,15 +7596,22 @@
           .querySelectorAll(".ntab")
           .forEach((t) => t.classList.remove("active"));
         if (btn) btn.classList.add("active");
-        const ts = $("topSection");
-        if (ts)
-          ts.style.display =
-            p === "eliminacion" || p === "posiciones" || p === "clasificados" || cu ? "none" : "";
+        // Inicio es la portada: hero + pozo + puntaje. El resto de las
+        // pestañas usan el área de contenido.
+        const ts = $("topSection"),
+          wrap = document.querySelector(".wrap"),
+          home = p === "inicio";
+        if (ts) ts.style.display = home ? "" : "none";
+        if (wrap) wrap.style.display = home ? "none" : "";
         syncAside(p);
         if (p === "eliminacion") renderBracket();
         if (p === "posiciones") renderLB();
         if (p === "clasificados") renderClasificados();
         if (p === "encuesta" && cu && !cu.isAdmin) renderSurvey();
+      }
+      function goHome() {
+        showPage("inicio", $("tabInicio"));
+        window.scrollTo({ top: 0, behavior: "smooth" });
       }
       // El panel lateral de Posiciones solo acompaña a la pestaña de
       // Grupos: en Posiciones duplicaría la tabla grande, y en Fase
@@ -7615,6 +7646,7 @@
       window.closeModal = closeModal;
       window.closeBg = closeBg;
       window.showPage = showPage;
+      window.goHome = goHome;
       window.swG = swG;
       window.savePred = savePred;
       window.saveGroup = saveGroup;
