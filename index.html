@@ -5856,6 +5856,14 @@
       const BR_O = new Date("2026-06-27T00:00:00-03:00");
       const BR_C = new Date("2026-06-28T15:00:00-03:00");
       const R32_LOCK_DL = new Date("2026-07-04T14:00:00-03:00");
+      // ⚠️ SEGURIDAD: este es un login de admin 100% client-side. La contraseña
+      // queda visible para cualquiera que lea el código fuente (repo o "ver
+      // código" del sitio publicado), y NO puede ocultarse con un placeholder
+      // sin romper el login, porque no hay backend que la valide. Esto NO es
+      // una protección real: la protección de verdad tiene que estar en las
+      // reglas de seguridad de Firebase Realtime Database (bloquear escritura
+      // sin auth). Para un fix real: migrar a Firebase Authentication (o una
+      // Cloud Function) y validar el rol de admin del lado del servidor.
       const ADMIN = "admin",
         APASS = "prode2026admin";
       const FG = 2000,
